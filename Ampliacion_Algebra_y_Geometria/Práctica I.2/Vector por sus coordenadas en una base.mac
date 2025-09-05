@@ -1,0 +1,20 @@
+Macro Cabri II Plus vers. MS-Windows 1.x (1.4.5)
+
+Vector por sus coordenadas en una base, Vector xu + yv
+Help:
+"En primer lugar, señale los dos vectores de la base (u y v, respectivamente). Después tome una pareja de escalares (x e y, respectivamente). El resultado mostrará el vector xu + yv."
+Mth: 0
+CN:4, ON:7, FN:2, PO:6
+CT:
+vector, CS 2, thicker, 
+vector, CS 2, thicker, 
+number, CS 0, default settings, 
+number, CS 0, default settings, 
+Const:
+Dil, Mth:0, 0, CN:3, VN:1, Const: 2 4 7
+Dil, Mth:0, 0, CN:3, VN:1, Const: 5 4 8
+Mid, Mth:0, 0, CN:2, VN:1, Const: 9 4
+Sym, Mth:0, 0, CN:2, VN:1, Const: 4 11
+Mid, Mth:0, 0, CN:2, VN:1, Const: 10 12
+Sym, Mth:0, 1, CN:2, VN:1, Const: 4 13, default settings, 
+Vec, Mth:0, 1, CN:2, VN:2, Const: 4 14, color:R, thicker, 

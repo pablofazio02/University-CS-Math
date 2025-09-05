@@ -1,0 +1,17 @@
+Macro Cabri II Plus vers. MS-Windows 1.x (1.4.5)
+
+Coordenadas de un vector en una base, Estas coordenadas
+Help:
+"Señálense los dos vectores de la base y a continuación, señale el vector del que desea hallar sus coordenadas"
+Mth: 0
+CN:3, ON:4, FN:3, PO:2
+CT:
+vector, CS 2, thicker, 
+vector, CS 2, thicker, 
+vector, CS 2, color:dG, 
+Const:
+Axes, Mth:0, 0, CN:1, VN:3, cart, Const: 7
+Eq/Co, Mth:0, 1, CN:2, VN:3, X2A2PY2B2EG1, cart, Const: 8 10, default settings, 
+Eq/Co, Mth:0, 1, CN:2, VN:3, X2PXYPY2EG0, cart, Const: 8 10, default settings, 
+Text, Mth:0, 1, CN:1, VN:3, Const: 8, inc.elmts: 12 11, default settings, 
+"("#; "#)"

@@ -1,0 +1,29 @@
+Macro Cabri II Plus vers. MS-Windows 1.x (1.4.5)
+
+Ecuación de un endomorfismo, Vector f(u)
+Help:
+"Señálese en primer lugar los vectores de la base canónica (e1,e2). Después señale los vectores u1 = f(e1) y u2 = f(e2). Por último señale el vector u del cual calcular la función f. "
+Mth: 0
+CN:5, ON:15, FN:2, PO:14
+CT:
+vector, CS 2, thicker, 
+vector, CS 2, thicker, 
+vector, CS 2, thicker, 
+vector, CS 2, thicker, 
+vector, CS 2, color:lBl, thicker, 
+Const:
+Axes, Mth:0, 0, CN:1, VN:3, cart, Const: 13
+Eq/Co, Mth:0, 0, CN:2, VN:3, X2A2PY2B2EG1, cart, Const: 8 16
+Eq/Co, Mth:0, 0, CN:2, VN:3, X2PXYPY2EG0, cart, Const: 8 16
+Eq/Co, Mth:0, 0, CN:2, VN:3, X2A2PY2B2EG1, cart, Const: 11 16
+Eq/Co, Mth:0, 0, CN:2, VN:3, X2PXYPY2EG0, cart, Const: 11 16
+Eq/Co, Mth:0, 0, CN:2, VN:3, X2A2PY2B2EG1, cart, Const: 14 16
+Eq/Co, Mth:0, 0, CN:2, VN:3, X2PXYPY2EG0, cart, Const: 14 16
+Formula, Mth:0, 0, CN:4, VN:1, Const: 22 18 21 20, formula: (a * b) + (c * d)
+Formula, Mth:0, 0, CN:4, VN:1, Const: 22 17 21 19, formula: (a * b) + (c * d)
+Transf, Mth:0, 0, CN:2, VN:1, axis:x, Const: 16 23
+Transf, Mth:0, 0, CN:2, VN:1, axis:y, Const: 16 24
+Par, Mth:0, 0, CN:2, VN:4, axis:y, Const: 25 16
+Par, Mth:0, 0, CN:2, VN:4, axis:x, Const: 26 16
+Int, Mth:0, 1, CN:2, VN:1, int ind:0, Const: 28 27, default settings, 
+Vec, Mth:0, 1, CN:2, VN:2, Const: 13 29, color:R, thicker, 

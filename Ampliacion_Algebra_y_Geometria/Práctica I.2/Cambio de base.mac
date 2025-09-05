@@ -1,0 +1,28 @@
+Macro Cabri II Plus vers. MS-Windows 1.x (1.4.5)
+
+Cambio de base, Vector u en la base B
+Help:
+"En primer lugar, señale los vectores de la base canónica (e1, e2). Después señale los vectores de la nueva base B, es decir, u1 y u2. Por último, señale la pareja de escalares de la expresión de u en la nueva base."
+Mth: 0
+CN:6, ON:13, FN:2, PO:12
+CT:
+vector, CS 2, thicker, 
+vector, CS 2, thicker, 
+vector, CS 2, color:R, thicker, 
+vector, CS 2, color:R, thicker, 
+number, CS 0, default settings, 
+number, CS 0, default settings, 
+Const:
+Axes, Mth:0, 0, CN:1, VN:3, cart, Const: 10
+Eq/Co, Mth:0, 0, CN:2, VN:3, X2A2PY2B2EG1, cart, Const: 11 15
+Eq/Co, Mth:0, 0, CN:2, VN:3, X2PXYPY2EG0, cart, Const: 11 15
+Eq/Co, Mth:0, 0, CN:2, VN:3, X2A2PY2B2EG1, cart, Const: 8 15
+Eq/Co, Mth:0, 0, CN:2, VN:3, X2PXYPY2EG0, cart, Const: 8 15
+Formula, Mth:0, 0, CN:4, VN:1, Const: 13 19 14 17, formula: (a * b) + (c * d)
+Formula, Mth:0, 0, CN:4, VN:1, Const: 13 18 14 16, formula: (a * b) + (c * d)
+Transf, Mth:0, 0, CN:2, VN:1, axis:x, Const: 15 20
+Transf, Mth:0, 0, CN:2, VN:1, axis:y, Const: 15 21
+Par, Mth:0, 0, CN:2, VN:4, axis:x, Const: 23 15
+Par, Mth:0, 0, CN:2, VN:4, axis:y, Const: 22 15
+Int, Mth:0, 1, CN:2, VN:1, int ind:0, Const: 24 25, default settings, 
+Vec, Mth:0, 1, CN:2, VN:2, Const: 10 26, default settings, 

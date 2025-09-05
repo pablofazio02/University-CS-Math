@@ -1,0 +1,103 @@
+1) En este apartado nos piden que dados un punto P, f(e1)=u1 y f(e2)=u2, calcular la imagen de P por la afinidad sigma.
+ Entonces, con la práctica I.2.4 he calculado f(P) y finalmente he trasladado el vector f(P) mediante el vector a, lo que nos da sigma(P).
+
+2) En este ejercicio nos piden que de cierta proyectividad sigma entre rectas distintas, sabiendo que aplica A en A’, B en B’ y C en C’ con A,B,C puntos distintos,
+hagamos una macro tal que X’=sigma(X), cualquiera que sea X.
+En primer lugar he trazado la recta r y he puesto sobe ella los puntos X(punto del que quiero hallar su imagen),A,B y C, y en otra recta s he puesto los puntos A’,B' y C’.
+Después he puesto los puntos :
+            B’’ = intersección de la recta A’B con la recta AB’
+            C’’ = intersección de la recta A’C con la recta AC’ 
+Y finalmente X’ = intersección de la recta AX’’ con la recta s, con X’’ = intersección de la recta A’X con la recta B’’C’’.
+Para la macro oculté los puntos X’’,B’’ y C’’.
+
+3) En este apartado nos piden que hagamos un macro de una proyectividad de una recta en sí misma utilizando la macro I-4-2. Para ello primero he trazado la
+recta r=s y una recta auxiliar t. En la recta r=s he puesto los puntos A,B,C,X,A',B'y C', y he tomado un punto O que no pertenezca ni a r=s ni a t.
+Después he hecho una perspectividad de centro O de r=s sobre t de manera que trazando las rectas OA,OC,OX,OB tenemos sus respectivas transformaciones A1,C1,X1 y B1.
+Y finalmente, creamos una macro utilizando la macro de proyectividades entre rectas distintas con esos nuevos puntos para hallar X'. 
+
+4) Esta práctica consiste en hallar los puntos límite de una proyectividad entre dos rectas de la que se conoce la imagen de un símplex.
+Primero he trazado las rectas r y s. Sobre s he puesto los puntos A',B' y C', y sobre r he puesto A,B y C. Después hallé los puntos C'' y B'' como
+en la práctica I.4.2. Tracé la recta C''B'', a su intersección con la paralela a r que pasa por A' lo llamé P y a su intersección con la paralela
+a s que pasa por A , Q. Finalmente, a la intersección de la recta AP con s es L' y a intersección se la recta A'Q con r, L.
+
+5) Esta práctica consiste en escribir una macro que calcule la razón doble (ABCD) de 4 puntos sobre una recta r.
+Para ello, primero he trazado una recta y sobre ella he puesto los puntos A,B,C y D. Y para poder utilizar la práctica I-3-2 se necesita un punto auxiliar, por lo que 
+he trazado una mediatriz entre los puntos A y B. A su punto de corte con la recta le he llamado M y después he trazado una circunferencia de centro M y radio hasta B.
+A su  punto de corte con la mediatriz le he llamado O. Finalmente, he utilizado la práctica I-3-2 para conocer sus coordenadas homogéneas y para hallar la razón 
+doble basta con dividir la primera componente de la coordenada entre la segunda.
+
+6) Este ejercicio nos pide escribir una macro que dé el transformado de cualquier otro punto de la recta sabiendo que  de una involución se conocen las imágenes
+de dos puntos que no son dobles.
+Para ello he construido una recta r y sobre ella los puntos Q',P,P' y Q. Después he trazado una mediatriz perpendicular a r pasando por P y una circunferencia con
+centro en P y radio hasta Q'. A los puntos de corte de la circunferencia con la mediatriz, he llamado B al de arriba y C al de abajo. A continuación, he trazado las
+rectas BQ y CR'y a su intersección la he llamado A. Seguidamente he trazado AP' y Q'C, y a su interseccion la he llamado D. Finalmente, la intersección de la recta
+BD con r es el punto que queríamos hallar, R.
+Para construir la macro ponemos como objeto inicial r,P,P',Q,Q' y R' y como objeto final R.
+
+7) Este ejercicio nos pide que escribamos una macro que proporcione la imagen de cualquier otro punto X' del plano, sabiendo la imagen de un simplex de 4 puntos por 
+una proyetividad sigma.
+En primer lugar he puesto los puntos del simplex (A,B,C,D), sus respectivas imágenes (A',B',C',D') y un punto X. Después he trazado la recta AB y DC, y, C'D' y A'B', 
+a cuyas intersecciones he llamado E y E' respectivamente. A continuación, tracé la recta XC y a su intersección con AB la llamé P. Con ayuda de la macro de la práctica
+I.4.2 calculamos P. También trazamos la recta XD y a su intersección con AB la llamamos Q. Volvemos a utilizar la práctica I.4.2 para calcular Q'. Y finalmente, 
+trazando las rectas C'P' y  P'Q' tenemos el punto X' pedido con el que podemos hacer la macro de proyectividades en un plano poniéndolo como objeto final.
+
+8) Esta práctica nos pide escribir una macro que calcule el cuarto armónico de tres puntos alineados.
+Para ello primero he construido una recta r y sobre ella tres puntos A,B y C. A continuacíon, tracé una circunferencia de centro C y radio hasta A, y una mediatriz
+que pasa por C perpendicular a r. Al punto de interseccíon de arriba de la mediatriz con la circunferencia lo llamé O.  Después tracé las rectas OA,OB y la bisectriz
+que pasa por C. Tomé lo puntos de corte de la madiatriz con OA y OB y tracé las rectas con B y A respectivamente. Y finalmente, tracé la recta que va desde la
+intersección de ambas rectas con O y a su punto de corte con r es el punto D, el llamado cuarto armónico.
+Para la macro tomamos como objetos iniciales la recta r,A,B y C y como objeto final D. 
+
+9)Esta práctica consiste en que escribamos una macro que dé la imagen x' de cualquier otra recta x de una proyectividad entre el haz de rectas que pasan por A y el haz
+de rectas que pasan por B, de los que se conocen las respectivas imágenes a',b' y c' de tres rectas a, b y c.
+Para ello primero he puesto los puntos A y B y sobre ellos las rectas a,b y c, y a',b'y c' respectivamente. Después tracé las rectas:
+b'' = (a intersección b')(a' intersección b)
+c'' = (a intersección c')(a' intersección c)
+Y finalmente x' = B(x'' intersección a) donde x'' = (x intersección a')(b'' intersección c'')
+
+10)Este ejercicio nos pide calcular la razón doble de un lápiz (a,b,c,d).
+Para ello primero tomamos un punto P y sobre él trazamos las rectas a,b,c,d. A continuación, tomamos una recta r que no pase por P y ponemos los puntos:
+A = r intersección con a
+B = r intersección con b
+C = r intersección con c
+D = r intersección con d
+Finalmente, utilizamos la macro de la razon doble de cuatro puntos alineados para hallar la razón doble del lápiz.
+
+11)Este apartado nos pide trazar el cuarto armónico de una terna (a,b,c) de rectas concurrentes.
+Para ello tomamos un punto P y tres rectas a,b y c que pasen por ese punto. Después trazamos una recta r cualquiera que no pase por a intersección b.
+Y en las intersecciones de r con a,b y c, ponemos los puntos A,B y C respectivamente. Ahora colocamos un punto D sobre r y lo unimos con P, y esa sería la recta d
+que buscábamos. Si utilizamos la práctica I.4.5 nos debe de dar como resultado -1 (nos sirve como método de comprobación).
+
+12)Esta práctica titulada El principio de dualidad pide comprobar que la correlación estándar transforma puntos alineados en rectas concurrentes.
+Para ello primero he tenido que elaborar una macro que permita trazar la recta A* transformada del punto A por la correlación estándar, para cualquiera que sea A.
+Una vez hecha esa macro, la utilizamos para trazar A*,B* y C* y vemos que fefectivamente si son concurrentes. 
+
+13)Este ejercicio nos pide que de una correlación sigma de P* a r entre el haz P* y la recta r sabiendo que a se transforma en A', b en B' y c en C', hallemos
+la imagen de otra recta x del haz.
+Para ello primero he puesto un punto P y sobe ese punt he trazado las rectas a,b,c y x. Después tomé otra recta r  y coloqué sobre ella los puntos A',B' y C'.
+A continuación cogí una recta s que no pase por P y puse los puntos:
+A = a intersección con s
+B = b intersección con s
+C = c intersección con s
+X = x intersección con s
+Y finalmente, utilicé la macro de proyectividades entre restas dinstintas para hallar X'.
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
