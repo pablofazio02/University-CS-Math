@@ -1,0 +1,6 @@
+2. ¿Qué ocurre si damos un valor negativo de LR? Da una explicación interpretando gráficamente lo que ocurre.
+
+Si damos un valor negativo a la tasa de aprendizaje, ADALINA no encuentra solución en ningún dataset, es decir, no encontramos un hiperplano que separe correctamente las salidas, ya que no modifica los pesos de forma adecuada y está muy alejado de los valores reales. Lo que estamos haciendo es modificar los pesos en el sentido contrario al que debemos.
+
+Gráficamente, ocurre que los pesos no se modifican para que la recta separadora se mueva en sentido del gradiente sino que la estamos alejando del mismo.
+	

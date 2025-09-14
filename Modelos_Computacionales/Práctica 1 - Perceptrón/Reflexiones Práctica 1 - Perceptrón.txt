@@ -1,0 +1,11 @@
+3. Comenta con tu palabras lo que ocurre cuando ponemos una tasa de aprendizaje de 0.005 para aprender la función OR en comparación con el caso en que utilizamos una tasa de 0.5.
+
+En el caso de que la tasa de aprendizaje es muy baja, se aprende de manera mucho más lenta y realizando cambios muy pequeños en los pesos. Necesitando así más épocas para el mismo problema. (p.e Tasa 0.005 -> Época 45; Tasa 0.5 -> Época 5)
+
+4. Usa una tasa de 0.5 y comenta lo sucede cuando intenta ajustar la función XOR, ¿por qué ocurre?
+
+El caso XOR es un caso no linealmente separable por lo que es imposible encontrar una solución para este ejercicio, de forma que nuestro programa tratará de calcularla hasta llegar al número máximo de épocas, donde parará.
+
+5. Propón un valor a añadir al conjunto de entrenamiento DatosAND para que el perceptrón no encuentre una solución.
+
+(-0.5, -0.5, 1)
