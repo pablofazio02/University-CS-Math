@@ -1,0 +1,229 @@
+---
+title: "Práctica 1: Fundamentos de R"
+subtitle: "Inferencia Estadística 2024-2025"
+author: "Pablo Fazio Arrabal"
+format: pdf
+---
+
+## Ejecución de un archivo Quarto
+
+1.  Compila en tu PC el archivo carga_datos_encuesta.qmd que carga y limpia la base de datos original Datos_Estudiantes.csv.
+
+## Carga de datos
+
+1.  Utiliza el archivo dataframe_encuesta.RDS, cárgalo bajo el nombre "encuesta". Copia el código necesario para hacerlo.
+
+```{r}
+encuesta <- readRDS("dataframe_encuesta.RDS")
+```
+
+2.  Comprueba el tipo de objeto que es encuesta. Usa la función class().
+
+```{r}
+class(encuesta)
+```
+
+3.  Comprueba los tipos de datos y que sean coherentes con la naturaleza de las variables. Usa la función str() o explora el objeto en el entorno.
+
+```{r}
+str(encuesta)
+```
+
+*En su gran mayoría, los datos son variables numéricas salvo en algunos casos que representan clases e incluso estas pueden estar ordenadas.*
+
+## Limpieza de datos
+
+1.  Calcula la media y la mediana de la variable NotaMediaGrado. ¿Qué observas? Escribe una función para la media.
+
+```{r}
+mean(encuesta$NotaMediaGrado, na.rm = TRUE)
+median(encuesta$NotaMediaGrado, na.rm = TRUE)
+```
+
+*En primer lugar, se observa que usando directamente 'means(encuesta\$NotaMediaGrado)' como hay valores desconocidos, el resultado sale NA. Cuando eliminamos estos valores vemos que la media no sale entre 0 y 10 como se presupone, luego habrá valores muy grandes.*
+
+```{r}
+calculo_media <- function(x){
+  
+  x_sin_na <- x[!is.na(x)]
+  
+  sum(x_sin_na)/length(x_sin_na)
+}
+```
+
+```{r}
+calculo_media(encuesta$NotaMediaGrado)
+```
+
+2.  Calcula la media y la mediana de todas las variables numéricas. Utiliza un bucle for y una condición if y guarda los resultados en un vector. ¿Qué observas?
+
+```{r}
+# Construimos un vector con los nombres de las variables numéricas en encuesta
+numericas <- c("Edad", "Peso", "Altura", "Hermanos", "Distancia", 
+"NotaMediaGrado", "NotaProbabilidad", "NotaEsperadaIE", 
+"SatisfaccionGrado", "TiempoMovil", "TiempoRedSocialFavorita")
+
+medias <- numeric(length = length(numericas))
+names(medias) <- numericas
+
+for(i in numericas){
+  medias[i] <- calculo_media(encuesta[,i])
+}
+
+medias
+```
+
+```{r}
+medianas <- numeric(length = length(numericas))
+names(medianas) <- numericas
+
+for(i in numericas){
+  medianas[i] <- median(encuesta[,i], na.rm = TRUE)
+}
+
+medianas
+```
+
+3.  Elimina o modifica manualmente los valores que parezcan erróneos.
+
+*Para ello, vamos a eliminar los valores que sean **mayores de 10 en la variable NotaMediaGrado** y los que sean **menores de 100 cm en la variable Altura.***
+
+```{r}
+encuesta$NotaMediaGrado[encuesta$NotaMediaGrado > 10] <- NA
+encuesta$Altura[encuesta$Altura < 100] <- NA
+```
+
+4.  Calcula de nuevo la media y la mediana de todas las variables numéricas.
+
+```{r}
+for(i in numericas){
+  medias[i] <- calculo_media(encuesta[,i])
+}
+
+medias
+```
+
+```{r}
+for(i in numericas){
+  medianas[i] <- median(encuesta[,i], na.rm = TRUE)
+}
+
+medianas
+```
+
+5.  ¿Qué pregunta es la que menos se ha contestado?
+
+```{r}
+# Definimos una función que cuente por cada columna el número de valores NA
+apply(encuesta, 2, function(x) sum(is.na(x)))
+```
+
+*Hemos creado una función que cuenta el número de valores NA en cada columna y por lo que vemos, la variable **NotaMediaGrado** es la que más se ha dejado en blanco, es decir, la que menos se ha contestado.*
+
+6.  Crea una matriz (usa la función matrix) con nombre datosnumericos con las variables que sean numéricas. ¿Qué dimensión tiene? Calcula la media de cada columna usando colMeans() y apply().
+
+```{r}
+datosnumericos <- as.matrix(encuesta[,numericas])
+dim(datosnumericos)
+```
+
+*La dimensión de la matriz de datos numéricos será de **62 filas** (número de respuestas a la encuesta) **x 11 columnas** (número de variables de tipo numérico).*
+
+```{r}
+colMeans(datosnumericos, na.rm = TRUE)
+```
+
+```{r}
+apply(datosnumericos, 2, mean, na.rm = TRUE)
+```
+
+7.  En general, ¿Se espera subir la nota media con Inferencia Estadística?
+
+```{r}
+mean(encuesta$NotaMediaGrado, na.rm = TRUE) < mean(encuesta$NotaEsperadaIE, na.rm = TRUE)
+```
+
+*Como la media de la variable **NotaMediaGrado** es menor que la media de la variable **NotaEsperadaIE**, se espera que la nota media suba con la calificación de Inferencia Estadística.*
+
+## Visualización en R base
+
+1.  Utiliza la función table() para realizar una tabla de frecuencias absolutas de la variable Sexo. Grafícala con la función barplot().
+
+```{r}
+tabla_sexo <- table(encuesta$Sexo)
+barplot(tabla_sexo)
+```
+
+2.  Convierte la tabla de frecuencias absolutas en relativas y grafícala.
+
+```{r}
+tabla_sexo_rel <- prop.table(tabla_sexo)
+barplot(tabla_sexo_rel)
+```
+
+3.  Utiliza la función hist() para hacer un histograma de la variable NotaMediaGrado.
+
+```{r}
+hist(encuesta$NotaMediaGrado, main = "Histograma de NotaMediaGrado", xlab = "NotaMediaGrado", ylab = "Frecuencia")
+```
+
+4.  Modifica el parámetro del número de barras y observa valores bajos y altos.
+
+```{r}
+hist(encuesta$NotaMediaGrado, main = "Histograma de NotaMediaGrado con 5 barras", xlab = "NotaMediaGrado", ylab = "Frecuencia", breaks = 5)
+
+hist(encuesta$NotaMediaGrado, main = "Histograma de NotaMediaGrado con 20 barras", xlab = "NotaMediaGrado", ylab = "Frecuencia", breaks = 20)
+```
+
+5.  Usa la ayuda de la función density() y observa en los ejemplos cómo graficarla con la función plot(). Hazlo para la variable Altura.
+
+```{r}
+plot(density(encuesta$Altura, na.rm = TRUE), main = "Densidad de la variable Altura", xlab = "Altura", ylab = "Densidad", xlim = c(140, 210))
+```
+
+6.  Usa la función boxplot() para representar la variable Distancia.
+
+```{r}
+# Haz el boxplot en horizontal
+boxplot(encuesta$Distancia, horizontal = TRUE, main = "Boxplot de la variable Distancia", xlab = "Distancia")
+```
+
+7.  Usa la función plot() para representar Peso y Altura.
+
+```{r}
+plot(encuesta$Peso, encuesta$Altura, main = "Peso vs Altura", xlab = "Peso (kg)", ylab = "Altura (cm)")
+```
+
+## Visualización en ggplot2
+
+1.  Carga la libreria.
+
+```{r}
+library(ggplot2)
+```
+
+2.  Modifica el código siguiente para representar la densidad estimada de la Altura por Sexo.
+
+```{r}
+ggplot(encuesta) + geom_density(aes(x = Altura), na.rm = TRUE)
+```
+
+*En este ejercicio, no tenía claro que se preguntaba. He hecho la función de densidad de la variable Altura, pero independiente del Sexo. Podemos hacer también la densidad de la variable Altura en función de si es masculino o femenino el sexo.*
+
+3.  Usa el parámetro fill dentro del aes para representar dos densidades, una para masculino y otra para femenino.
+
+```{r}
+ggplot(encuesta) + geom_density(aes(x = Altura, fill = Sexo), alpha = 0.5, na.rm = TRUE)
+```
+
+4.  Modifica el código para hacer un histograma en vez de una densidad con todos los datos y para la variable Distancia.
+
+```{r}
+ggplot(encuesta) + geom_histogram(aes(x = Distancia), fill = "lightblue", color = "black", bins = 15, na.rm = TRUE) + labs(title = "Histograma de la variable Distancia", x = "Distancia (en km)", y = "Frecuencia")
+```
+
+5.  Modifica el código para hacer un boxplot de la NotaMediaGrado en base al Sexo.
+
+```{r}
+ggplot(encuesta) + geom_boxplot(aes(x = NotaMediaGrado, y = Sexo), fill = "lightblue", color = "black", na.rm = TRUE)
+```

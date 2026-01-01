@@ -1,0 +1,108 @@
+import java_cup.runtime.*;
+import java.util.*;
+
+//Símbolos terminales
+terminal MAS, MENOS, POR, DIV, MENOSUNARIO, PYC, AP, CP, ALL, CLL, IGUAL;
+terminal PRINT, WHILE, DO, IF, ELSE, FOR, MENOR, MENOROIGUAL, IGUALDAD, NOIGUALDAD, MAYOR, MAYOROIGUAL, NOT, AND, OR;
+terminal String ENTERO, IDENT;
+
+//Símbolos no terminales
+non terminal axioma;
+non terminal AST listaSentencia, sentencia;
+non terminal AST expresion;
+non terminal AST condicion;
+non terminal AST numero;
+
+//Precedencias
+precedence right IGUAL;
+precedence left OR;
+precedence left AND;
+precedence left IGUALDAD, NOIGUALDAD, MENOR, MENOROIGUAL, MAYOR, MAYOROIGUAL;
+precedence left MAS, MENOS;
+precedence left POR, DIV;
+precedence right NOT;
+precedence left MENOSUNARIO;
+precedence nonassoc IF;
+precedence nonassoc ELSE;
+
+//Gramática
+
+axioma ::= listaSentencia:ls                        {: ls.ctd(); :}
+        ;
+
+listaSentencia ::= listaSentencia:ls sentencia:s     {: RESULT = new AST(ls,s); :}
+                
+                |  sentencia:s                       {: RESULT = new AST(null,s); :}
+                ;
+
+sentencia ::= expresion:e  PYC                       {: RESULT = e; :}
+           
+           |  PRINT AP expresion:e CP PYC            {: RESULT = new PRINT(e); :}
+           
+           | ALL listaSentencia:ls CLL               {: RESULT = new BLOQUE(ls); :}
+
+           | IF AP condicion:c CP sentencia:s        {: IF aux = new IF(c,s);  RESULT = new IFELSE(aux,null); :}   //Un IF es un IFELSE con las sentencias del caso False a NULL!!!
+           
+           | IF AP condicion:c CP sentencia:s  ELSE sentencia:sElse     {: IF aux = new IF(c,s);  RESULT = new IFELSE(aux,sElse); :}
+
+           | WHILE AP condicion:c CP sentencia:s                        {: RESULT = new WHILE(c,s); :} 
+           
+           | DO sentencia:s WHILE AP condicion:c CP  PYC                {: RESULT = new DOWHILE(s,c); :}
+           
+           | FOR AP expresion:e1 PYC condicion:c PYC expresion:e2 CP sentencia:s         {:
+                                                                                                          /*    OBSERVACION:
+                                                                                                                        En un FOR, tenemos                                                                                 
+                                                                                                                        1. Una primera sentencia, que suele ser una variable i que se inicializa (i=1 por ejemplo)
+                                                                                                                        2. La condición que debe cumplir dicha sentencia para entrar al bucle
+                                                                                                                        3. Una actualización de la sentencia
+                                                                                                                        4. Las sentencias a ejecutar dentro del bucle
+                                                                                                                Lo podemos ver como un while(sentencia cumpla condición) -> ejecutar sentencias internas + actualizar sentencia 
+                                                                                                        */
+
+                                                                                                AST sentenciasEjecutar = new AST (s, e2);        //donde s son las sentencias dentro del for y e2 la actualización de la variable
+                                                                                                WHILE whiLe = new WHILE(c, sentenciasEjecutar);  //recordamos que en WHILE había una condición para entrar y las sentencias de dentro
+                                                                                                RESULT = new AST(e1,whiLe);                      //En primer lugar se inicializa la variable y luego viene el WHILE construido que representa al FOR
+                                                                                        :} 
+           ;
+
+
+expresion ::= numero:n                                     {: RESULT = n; :}
+             |  IDENT:i                                    {: RESULT = new CONSTANTE(i); :}
+             |  expresion:e1 MAS expresion:e2              {: RESULT = new SUMA(e1,e2); :}
+             |  expresion:e1  MENOS expresion:e2           {: RESULT = new RESTA(e1,e2); :}
+             |  expresion:e1 POR expresion:e2              {: RESULT = new POR(e1,e2); :}
+             |  expresion:e1 DIV expresion:e2              {: RESULT = new DIV(e1,e2); :}
+             |  MENOS expresion:e                          {: RESULT = new RESTA(e,null); :}   %prec MENOSUNARIO
+             |  AP expresion:e CP                          {: RESULT = e; :}
+
+
+             |  IDENT:i IGUAL expresion:e              {: RESULT = new ASIG(i,e); :}
+
+             ;
+
+
+numero ::= ENTERO:n     {: RESULT = new CONSTANTE(n); :}
+        ;
+
+
+condicion ::= expresion:e1 IGUALDAD expresion:e2        {: RESULT = new CONDICION(1,e1,e2); :}   
+
+           | expresion:e1 NOIGUALDAD expresion:e2       {: RESULT = new CONDICION(2, e1, e2); :}
+
+           | expresion:e1 MAYOR expresion:e2            {: RESULT = new CONDICION(3,e1,e2); :}
+
+           | expresion:e1 MAYOROIGUAL expresion:e2      {: RESULT = new CONDICION(4,e1,e2); :}  
+
+           | expresion:e1 MENOR expresion:e2            {: RESULT = new CONDICION(5,e1,e2); :}
+
+           | expresion:e1 MENOROIGUAL expresion:e2      {: RESULT = new CONDICION(6,e1,e2); :}
+
+           | AP condicion:c CP                          {: RESULT = c; :}
+
+           | condicion:c1 AND condicion:c2              {: RESULT = new AND(7, c1,c2); :}
+           
+           | condicion:c1 OR condicion:c2               {: RESULT = new OR(8, c1,c2); :}
+           
+           | NOT condicion:c                            {: RESULT = new NOT(9, c); :}
+
+           ;

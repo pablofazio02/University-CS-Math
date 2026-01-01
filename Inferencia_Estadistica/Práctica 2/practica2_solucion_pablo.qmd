@@ -1,0 +1,214 @@
+---
+title: "Práctica 2. Introducción Inferencia Estadística"
+subtitle: "Inferencia Estadística 2024-2025"
+author: "Antonio Elías"
+format: pdf
+---
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+# Sobre distribución en el muestreo
+
+## Variable aleatoria Bernoulli
+
+  1. De muestre por simulación con muestras de tamaño $n=3$ que la función de densidad de la muestra $X_1, \dots, X_n$ es igual a
+
+$$f_{\theta}(x_1, \dots, x_n) = \theta^{\sum_{i=1}^n x_i}(1-\theta)^{n - \sum_{i=1}^n x_i}.$$
+```{r}
+theta <- 0.7
+n <- 3
+
+num_muestras <- 10000
+
+muestras <- matrix(NA, nrow = num_muestras, ncol = n)
+
+for (i in 1:num_muestras) {
+  muestras[i,] <- rbinom(n, size = 1, theta)
+}
+
+# Otra forma:t(sapply(1:num_muestras, function(x) rbinom(n, size = 1, theta)))
+
+# Nos da las medias de cada variable que debe corresponder más o menos 
+#con nuestra theta, colMeans(muestras)
+
+# Vamos a poner nuestra matriz como texto en cada fila "1 1 0"
+# las convierto en un character para hacer una tabla y calcular probabilidades empíricas
+muestras_character <- apply(muestras, 1, function(x) paste(x, collapse = " "))
+
+# Vamos a contar cuántas veces aparece cada combinación
+probabilidad_empirica <- proportions(table(muestras_character))
+
+# Ahora debemos ver que la funcion de densidad coincide con la fórmula del enunciado dado una muestra X1,X2,X3
+
+probabilidad_teorica_f <- function(x, theta){
+  theta^sum(x) * (1 - theta)^(length(x) - sum(x))
+}
+
+# Posibles combinaciones de 0 y 1 en 3 variables
+posibles_combinaciones <- expand.grid(rep(list(0:1), n))
+
+probabilidad_teorica <- apply(posibles_combinaciones, 1, function(x) probabilidad_teorica_f(x, theta))
+
+# Ponemos los nombres de las combinaciones
+names(probabilidad_teorica) <- apply(posibles_combinaciones, 1, function(x) paste(x, collapse = " "))
+
+# Comparamos las probabilidades teóricas con las empíricas
+cat("Probabilidad teórica: \n")
+probabilidad_teorica[names(probabilidad_empirica)]
+cat("\nProbabilidad empírica: \n")
+probabilidad_empirica
+```
+
+  2. Obtenga por simulación la distribución bajo el muestreo del estadístico definido a continuación y compárelo con el resultado teórico visto en clase.
+
+$$T(X_1, \dots, X_n) = \frac{1}{n} \sum_{i=1}^n X_i.$$
+```{r grafico_boxplot}
+# Cálculo del estadístico
+media_muestral <- apply(muestras, 1, mean)
+
+# Grafica el diagrama de barras con proporciones
+ggplot(data.frame(media_muestral = media_muestral), aes(x = media_muestral)) + geom_bar(aes(y = after_stat(prop))) +
+  xlab("Media") + ylab("Distribución Muestral de la Media")
+```
+
+  3. Repita el ejercicio para un tamaño muestral $n$ grande. ¿Qué ocurre?
+  
+   *Básicamente es que el diagrama de barras cuanto más crece el tamaño muestral, más se parece a una función de distribución normal centrada en 'theta'.*
+  
+## La media muestral de poblaciones exponenciales
+
+Definamos el estadístico media muestral como
+
+$$T(X_1, \dots, X_n) = \bar{X} = \frac{1}{n} \sum_{i=1}^n X_i.$$
+
+  1. Obtenga la distribución bajo el muestreo $\bar{X}$ en una población exponencial con parámetro $\lambda  = 2$. Obtenga muestras de tamaño 5. ¿Cómo es la forma de la densidad?  ¿Cuánto valen aproximadamente la $E[\bar{X}]$ y la varianza $V[\bar{X}]$?
+  
+```{r grafico_boxplot2}
+n <- 5
+lambda <- 2
+num_muestras <- 1000
+
+muestras_exp <- replicate(num_muestras, mean(rexp(n, rate = lambda)))
+
+ggplot(data.frame(muestras_exp), aes(x = muestras_exp)) + geom_histogram(aes(y = after_stat(density)), bins = 10, col = 'black', fill = 'olivedrab4')
+
+data.frame(muestras_exp) %>% summarise(mean = mean(muestras_exp), variance = var(muestras_exp))
+```
+
+  2. Repita el ejercicio anterior para un tamaño muestral grande. ¿Qué ocurre? ¿Cómo es la forma de la densidad? ¿Cuánto valen aproximadamente la $E[\bar{X}]$ y la varianza $V[\bar{X}]$?
+  
+```{r grafico_boxplot3}
+n <- 1000
+lambda <- 2
+num_muestras <- 1000
+
+muestras_exp <- replicate(num_muestras, mean(rexp(n, rate = lambda)))
+
+ggplot(data.frame(muestras_exp), aes(x = muestras_exp)) + geom_histogram(aes(y = after_stat(density)), bins = 10, col = 'black', fill = 'olivedrab4')
+
+data.frame(muestras_exp) %>% summarise(mean = mean(muestras_exp), variance = var(muestras_exp))
+```
+  
+
+## La varianza muestral
+
+Definamos el estadístico varianza muestral como
+
+$$T(X_1, \dots, X_n) = S^2 = \frac{1}{n-1} \sum_{i=1}^n (X_i - \bar{X})^2.$$
+
+  1. Obtenga la distribución bajo el muestreo de la varianza muestral $S^2$ en una población Normal con parámetros $\mu = 0$ y $\sigma = 1$. Obtenga muestras de tamaño $n = 5$.
+  
+```{r grafico_boxplot4}
+# varianza de n normales
+mu <- 0
+sigma <- 1 
+R <- 1000
+n <- 5
+
+varianza <- replicate(R, var(rnorm(n, mean = mu, sd = sigma)))
+
+datos <- data.frame(varianza = varianza)
+ggplot(datos) +
+  geom_histogram(aes(x = varianza, y = after_stat(density)),
+                 bins = 10,
+                 col = 'black',
+                 fill = 'olivedrab4')
+
+datos %>% summarise(mean = mean(varianza), variance = var(varianza))
+```
+  
+
+  2. Repita el ejercicio anterior aumentando el tamaño muestral.
+  
+```{r grafico_boxplot5}
+mu <- 0
+sigma <- 1 
+R <- 1000
+n <- 1000
+
+varianza <- replicate(R, var(rnorm(n, mean = mu, sd = sigma)))
+
+datos <- data.frame(varianza = varianza)
+ggplot(datos) +
+  geom_histogram(aes(x = varianza, y = after_stat(density)),
+                 bins = 10,
+                 col = 'black',
+                 fill = 'olivedrab4')
+
+datos %>% summarise(mean = mean(varianza), variance = var(varianza))
+```
+  
+Responda a las siguientes preguntas:
+  
+  - ¿Cuáles parecen ser los valores de $E[S^2]$? ¿Son estos valores aceptables?
+  
+  - ¿Coinciden en ambos casos los valores de $V[S^2]$?
+  
+  - ¿Qué observas en cuanto a la forma de las distribuciones?
+
+  3. Repita el ejercicio de los puntos 1-2 para $\sigma = 2$ y responda a las preguntas anteriores.
+  
+```{r grafico_boxplot6}
+# varianza de n normales
+mu <- 0
+sigma <- 2
+R <- 1000
+n <- 10000
+
+varianza <- replicate(R, var(rnorm(n, mean = mu, sd = sigma)))
+
+datos <- data.frame(varianza = varianza)
+ggplot(datos) +
+  geom_histogram(aes(x = varianza, y = after_stat(density)),
+                 bins = 10,
+                 col = 'black',
+                 fill = 'olivedrab4')
+
+datos %>% summarise(mean = mean(varianza), variance = var(varianza))
+```
+  
+
+  4. Repita el ejercicio de los puntos 1-2 generando datos de una distribución exponencial con parámetro $\lambda = 1$ y responda a las preguntas anteriores.
+  
+```{r grafico_boxplot7}
+# varianza de n normales
+lambda <- 1
+R <- 1000
+n <- 10000
+
+varianza <- replicate(R, var(rexp(n, rate = lambda)))
+
+datos <- data.frame(varianza = varianza)
+
+ggplot(datos) +
+  geom_histogram(aes(x = varianza, y = after_stat(density)),
+                 bins = 10,
+                 col = 'black',
+                 fill = 'olivedrab4')
+
+datos %>% summarise(mean = mean(varianza), variance = var(varianza))
+```
+  

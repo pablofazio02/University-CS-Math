@@ -1,0 +1,474 @@
+---
+title: "Práctica 5. Estimación Puntual"
+subtitle: "Inferencia Estadística 2024-2025"
+author: "Pablo Fazio Arrabal"
+format: pdf
+---
+
+\vspace {-1cm}
+
+Cargue el archivo PRACTICA5.RDS disponible en Campus Virtual usando el siguiente código:
+
+```{r, eval = TRUE, warning = FALSE}
+library(ggplot2)
+datos <- readRDS("PRACTICA5.RDS")
+```
+
+## Ejercicio 1
+
+Argumente qué distribución o distribuciones de probabilidad podrían haber generado las diez muestras que aparecen como columnas en el \texttt{data.frame} nombrado _datos_. **(Ver anexo)**.
+
+## Ejercicio 2
+
+Sabiendo la familia paramétrica de las distribuciones que generaron los datos, proponga _intuitivamente_ algún estimador $T$ (función de la muestra) para aproximar los parámetros de las distribuciones de $X_2$, $X_3$, $X_4$, $X_6$, $X_8$, $X_9$ y $X_{10}$. 
+
+### Distribución $X_2 \sim Poisson(\lambda)$
+
+En este primer caso únicamente debemos obtener el parámetro $\lambda$ de la distribución de Poisson. Para ello, podemos utilizar la **media muestral** como estimador:
+
+$$\bar{X} = \frac{1}{n} \sum_{i=1}^{n} X_i,$$
+Esto es debido a que si $X \sim Poisson(\lambda)$, $E[X] = \lambda$ . Luego, usando la muestra *datos* (LGN), podemos estimar el parámetro $\lambda$ como:
+
+```{r}
+lambda_est <- mean(datos$X_2)
+lambda_est
+```
+#### Comprobación
+
+```{r}
+# Gráfico de barras de X que se distribuye como Poisson(lambda_est)
+
+ggplot(data.frame(x = min(datos$X_2):max(datos$X_2)), aes(x = x)) +
+  geom_bar(aes(y = dpois(x, lambda_est)), stat = "identity", fill = "blue", alpha = 0.5) +
+  labs(title = "Distribución Poisson con lambda estimado",
+       x = "X",
+       y = "Frecuencia") +
+  theme_minimal()
+
+# Graficamos la muestra de datos$X_2
+
+ggplot(datos, aes(x = X_2)) + geom_bar(aes(y = ..count.. / sum(..count..)), 
+                                       fill = "red", alpha = 0.5) +
+  labs(title = "Distribución de la muestra X_2",
+       x = "X",
+       y = "Frecuencia") +
+  theme_minimal()
+
+```
+
+### Distribución $X_3 \sim Binomial(n, p)$
+
+En este caso, la distribución de $X_3$ es una Binomial, por lo que debemos estimar los parámetros $n$ y $p$. Para ello, podemos usar dos estimadores: la **media muestral** y la **cuasivarianza muestral**. 
+
+$$ \bar{X} = \frac{1}{n} \sum_{i=1}^{n} X_i $$
+$$ S^2 = \frac{1}{n-1} \sum_{i=1}^{n} (X_i - \bar{X})^2 $$
+Si $X \sim Binomial(n, p)$, entonces $E[X] = np$ y $Var(X) = np(1-p)$. Por tanto, podemos despejar los parámetros de la siguiente forma:
+
+$$ \bar{X} = np \implies p = \frac{\bar{X}}{n} $$
+$$ S^2 = np(1-p) \implies n = \frac{S^2}{p(1-p)} $$
+
+Luego, podemos estimar los parámetros $n$ y $p$ como:
+
+$$ \hat{p} = 1 - \frac{S^2}{\bar{X}} $$
+
+$$ \hat{n} = \frac{\bar{x}}{\hat{p}} $$
+
+Usando ahora la muestra *datos*, hacemos la estimación:
+
+```{r}
+media_muestral <- 1/(nrow(datos)) * sum(datos$X_3)
+var_muestral <- 1/(nrow(datos) - 1) * sum((datos$X_3 - media_muestral)^2)
+
+p_est <- 1 - (var_muestral / media_muestral)
+p_est
+n_est <- round(media_muestral / p_est)
+n_est
+```
+
+#### Comprobación
+
+```{r}
+# Gráfico de barras de X que se distribuye como Binomial(n_est, p_est)
+
+ggplot(data.frame(x = min(datos$X_3):max(datos$X_3)), aes(x = x)) +
+  geom_bar(aes(y = dbinom(x, n_est, p_est)), stat = "identity", fill = "blue", alpha = 0.5) +
+  labs(title = "Distribución Binomial con n y p estimados",
+       x = "X",
+       y = "Frecuencia") +
+  theme_minimal()
+
+# Graficamos la muestra de datos$X_3
+
+ggplot(datos, aes(x = X_3)) + geom_bar(aes(y = ..count.. / sum(..count..)), 
+                                       fill = "red", alpha = 0.5) +
+  labs(title = "Distribución de la muestra X_3",
+       x = "X",
+       y = "Frecuencia") +
+  theme_minimal()
+```
+
+### Distribución $X_4 \sim Normal(\mu, \sigma)$
+
+En este caso, la distribución de $X_4$ es una Normal, por lo que debemos estimar los parámetros $\mu$ y $\sigma$. Para ello, podemos usar dos estimadores: la **media muestral** y la **cuasivarianza muestral**.
+
+$$ \bar{X} = \frac{1}{n} \sum_{i=1}^{n} X_i $$
+
+$$ S^2 = \frac{1}{n-1} \sum_{i=1}^{n} (X_i - \bar{X})^2 $$
+
+Si $X \sim Normal(\mu, \sigma)$, entonces $E[X] = \mu$ y $Var(X) = \sigma^2$. Por tanto, podemos estimar los parámetros $\mu$ y $\sigma$ como:
+
+$$ \hat{\mu} = \bar{X} $$
+
+$$ \hat{\sigma}^2 = S^2 $$
+Entonces, usando la muestra *datos*, hacemos la estimación:
+
+```{r}
+mu_est <- mean(datos$X_4)
+sigma_est <- (1/(nrow(datos) - 1)) * sum((datos$X_4 - mu_est)^2)
+
+mu_est
+sigma_est
+```
+
+
+#### Comprobación
+
+```{r}
+# Gráfico de densidad de X que se distribuye como Normal(mu_est, sigma_est)
+
+ggplot(data.frame(x = min(datos$X_4):(max(datos$X_4))), aes(x = x)) +
+  geom_line(aes(y = dnorm(x, mu_est, sigma_est)), color = "black") +
+  labs(title = "Distribución Normal con mu y sigma estimados",
+       x = "X",
+       y = "Densidad") +
+  theme_minimal()
+
+# Graficamos la muestra de datos$X_4
+
+ggplot(datos, aes(x = X_4)) + geom_density(aes(y = ..density..), 
+                                       fill = "red", alpha = 0.5) +
+  labs(title = "Distribución de la muestra X_4",
+       x = "X",
+       y = "Densidad") +
+  theme_minimal()
+```
+
+
+### Distribución $X_6 \sim Gamma(\alpha, \lambda)$
+
+En este caso, la distribución de $X_6$ es una Gamma, por lo que debemos estimar los parámetros $\alpha$ y $\lambda$. Para ello, podemos usar dos estimadores: la **media muestral** y la **cuasivarianza muestral**.
+
+$$ \bar{X} = \frac{1}{n} \sum_{i=1}^{n} X_i $$
+
+$$ S^2 = \frac{1}{n-1} \sum_{i=1}^{n} (X_i - \bar{X})^2 $$
+
+Si $X \sim Gamma(\alpha, \lambda)$, entonces $E[X] = \frac{\alpha}{\lambda}$ y $Var(X) = \frac{\alpha}{\lambda^2}$. Por tanto, podemos estimar los parámetros $\alpha$ y $\lambda$ como:
+
+$$ \hat{\alpha} = \frac{\bar{X}^2}{S^2} $$
+
+$$ \hat{\lambda} = \frac{\bar{X}}{S^2} $$
+
+Entonces, usando la muestra *datos*, hacemos la estimación:
+
+```{r}
+media_muestral <- mean(datos$X_6)
+var_muestral <- (1/(nrow(datos) - 1)) * sum((datos$X_6 - media_muestral)^2)
+
+alpha_est <- (media_muestral^2) / var_muestral
+lambda_est <- media_muestral / var_muestral
+
+alpha_est
+lambda_est
+```
+
+#### Comprobación
+
+```{r}
+# Gráfico de densidad de X que se distribuye como Gamma(alpha_est, lambda_est)
+
+ggplot(data.frame(x = min(datos$X_6):(max(datos$X_6))), aes(x = x)) +
+  geom_line(aes(y = dgamma(x, alpha_est, lambda_est)), color = "black") +
+  labs(title = "Distribución Gamma con alpha y lambda estimados",
+       x = "X",
+       y = "Densidad") +
+  theme_minimal()
+
+# Graficamos la muestra de datos$X_6
+
+ggplot(datos, aes(x = X_6)) + geom_density(aes(y = ..density..), 
+                                       fill = "red", alpha = 0.5) +
+  labs(title = "Distribución de la muestra X_6",
+       x = "X",
+       y = "Densidad") +
+  theme_minimal()
+```
+
+
+### Distribución $X_8 \sim Uniforme(a, b)$
+
+En este caso, la distribución de $X_8$ es una Uniforme, por lo que debemos estimar los parámetros $a$ y $b$. Para ello, podemos usar dos estimadores: el **mínimo** y el **máximo** de la muestra.
+
+Si $X \sim Uniforme(a, b)$, entonces $E[X] = \frac{a + b}{2}$ y $Var(X) = \frac{(b - a)^2}{12}$. Por tanto, podemos estimar los parámetros $a$ y $b$ como:
+
+$$ \hat{a} = \min(X) $$
+
+$$ \hat{b} = \max(X) $$
+
+Esto es debido a que si $X \sim Uniforme(a, b)$, entonces $X$ toma valores entre $a$ y $b$. Por tanto, el mínimo de la muestra será $a$ y el máximo será $b$ estimada.
+
+Entonces, usando la muestra *datos*, hacemos la estimación:
+
+```{r}
+a_est <- min(datos$X_8)
+b_est <- max(datos$X_8)
+
+a_est
+b_est
+```
+
+#### Comprobación
+
+```{r}
+# Gráfico de densidad de X que se distribuye como Uniforme(a_est, b_est)
+
+ggplot(data.frame(x = min(datos$X_8):(max(datos$X_8))), aes(x = x)) +
+  geom_line(aes(y = dunif(x, a_est, b_est)), color = "black") +
+  labs(title = "Distribución Uniforme con a y b estimados",
+       x = "X",
+       y = "Densidad") +
+  theme_minimal()
+
+# Graficamos la muestra de datos$X_8
+
+ggplot(datos, aes(x = X_8)) + geom_density(aes(y = ..density..), 
+                                       fill = "red", alpha = 0.5) +
+  labs(title = "Distribución de la muestra X_8",
+       x = "X",
+       y = "Densidad") +
+  theme_minimal()
+```
+
+
+### Distribución $X_9 \sim Normal(\mu, \sigma)$
+
+En este caso, la distribución de $X_9$ es una Normal, por lo que debemos estimar los parámetros $\mu$ y $\sigma$. Para ello, podemos usar dos estimadores: la **media muestral** y la **cuasivarianza muestral**.
+
+Antes de eso, eliminamos algunos valores atípicos de la muestra. Para ello, utilizamos el método `boxplot.stats()` de R, que nos permite obtener los valores atípicos de una muestra.
+
+```{r}
+outliers <- boxplot.stats(datos$X_9)$out
+datosModificados <- datos[!(datos$X_9 %in% outliers), ]
+```
+
+Como en el caso de $X_4$, si $X \sim Normal(\mu, \sigma)$, entonces $E[X] = \mu$ y $Var(X) = \sigma^2$. Por tanto, podemos estimar los parámetros $\mu$ y $\sigma$ como:
+
+$$ \hat{\mu} = \bar{X} $$
+
+$$ \hat{\sigma}^2 = S^2 $$
+
+Entonces, usando la muestra *datosModificados*, hacemos la estimación:
+
+```{r}
+mu_est_9 <- mean(datosModificados$X_9)
+sigma_est_9 <- (1/(nrow(datosModificados) - 1)) * sum((datosModificados$X_9 - mu_est_9)^2)
+
+mu_est_9
+sigma_est_9
+```
+
+#### Comprobación
+
+```{r}
+# Gráfico de densidad de X que se distribuye como Normal(mu_est_9, sigma_est_9)
+ggplot(data.frame(x = min(datosModificados$X_9):(max(datosModificados$X_9))), aes(x = x)) +
+  geom_line(aes(y = dnorm(x, mu_est_9, sigma_est_9)), color = "black") +
+  labs(title = "Distribución Normal con mu y sigma estimados",
+       x = "X",
+       y = "Densidad") +
+  theme_minimal()
+
+# Graficamos la muestra de datos$X_9
+ggplot(datosModificados, aes(x = X_9)) + geom_density(aes(y = ..density..), 
+                                       fill = "red", alpha = 0.5) +
+  labs(title = "Distribución de la muestra X_9",
+       x = "X",
+       y = "Densidad") +
+  theme_minimal()
+```
+
+
+### Distribución $X_{10} \sim Binomial(n, p)$
+
+En este caso, la distribución de $X_{10}$ es una Binomial, por lo que debemos estimar los parámetros $n$ y $p$. Para ello, podemos usar dos estimadores: la **media muestral** y la **cuasivarianza muestral**. Aquí debemos también quitar los valores atípicos de la muestra.
+
+$$ \bar{X} = \frac{1}{n} \sum_{i=1}^{n} X_i $$
+
+$$ S^2 = \frac{1}{n-1} \sum_{i=1}^{n} (X_i - \bar{X})^2 $$
+
+Si $X \sim Binomial(n, p)$, entonces $E[X] = np$ y $Var(X) = np(1-p)$. Por tanto, podemos estimar los parámetros $n$ y $p$ como:
+
+$$ \hat{p} = 1 - \frac{S^2}{\bar{X}} $$
+
+$$ \hat{n} = \frac{\bar{x}}{\hat{p}} $$
+
+Entonces, usando la muestra *datos*, hacemos la estimación:
+
+```{r}
+
+outliers2 <- boxplot.stats(datos$X_10)$out
+datosModificados2 <- datos[!(datos$X_10 %in% outliers2), ]
+
+media_muestral_10 <- mean(datosModificados2$X_10)
+var_muestral_10 <- (1/(nrow(datosModificados2) - 1)) * sum((datosModificados2$X_10 - media_muestral_10)^2)
+
+p_est_10 <- 1 - (var_muestral_10 / media_muestral_10)
+p_est_10
+n_est_10 <- round(media_muestral_10 / p_est_10)
+n_est_10
+```
+#### Comprobación
+
+```{r}
+# Gráfico de barras de X que se distribuye como Binomial(n_est_10, p_est_10)
+
+ggplot(data.frame(x = min(datosModificados2$X_10):max(datosModificados2$X_10)), aes(x = x)) +
+  geom_bar(aes(y = dbinom(x, n_est_10, p_est_10)), stat = "identity", fill = "blue", alpha = 0.5) +
+  labs(title = "Distribución Binomial con n y p estimados",
+       x = "X",
+       y = "Frecuencia") +
+  theme_minimal()
+
+# Graficamos la muestra de datos$X_10
+
+ggplot(datosModificados2, aes(x = X_10)) + geom_bar(aes(y = ..count.. / sum(..count..)), 
+                                       fill = "red", alpha = 0.5) +
+  labs(title = "Distribución de la muestra X_10",
+       x = "X",
+       y = "Frecuencia") +
+  theme_minimal()
+
+```
+
+
+## Ejercicio 3
+
+La variables $X_7$ y $X_4$  están relacionadas como sigue: 
+
+$$X_7 = \beta_0 + \beta_1 X_4 + \epsilon,$$
+
+siendo $\beta_0, \beta_1 \in \mathbb{R}$ parámetros y $\epsilon \sim N(0, \sigma^2)$. 
+
+Proponga una estimación para los parámetros.
+
+En primer lugar, dibujemos una nube de puntos con los datos de $X_4$ y $X_7$ para ver que efectivamente siguen una relación lineal.
+
+```{r}
+datos <- readRDS("PRACTICA5.RDS")
+ggplot(datos, aes(x = X_4, y = X_7)) +
+  geom_point() +
+  labs(title = "Nube de puntos entre X4 y X7",
+       x = "X4",
+       y = "X7") +
+  theme_minimal()
+```
+
+Además, podemos tratar de ver su recta de regresión teórica. Para ello, utilizamos el método `lm()` de R, que nos permite ajustar un modelo lineal a los datos.
+
+```{r, warning=FALSE}
+ggplot(datos, aes(x = X_4, y = X_7)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Recta de regresión entre X4 y X7",
+       x = "X4",
+       y = "X7") +
+  theme_minimal()
+```
+
+Veamos ahora una estimación de los parámetros $\beta_0$ y $\beta_1$. Para ello, haremos los siguientes cálculos.
+
+1.) En la igualdad, aplicamos la esperanza a ambos lados:
+$$ E[X_7] = E[\beta_0 + \beta_1 X_4 + \epsilon] = \beta_0 + \beta_1 E[X_4] + E[\epsilon] = \beta_0 + \beta_1 E[X_4]$$
+(ya que $\epsilon \sim N(0, \sigma^2)$ y la esperanza es una función lineal).
+
+De esta forma, depejando $\beta_0$, nos queda que $\beta_0 = E[X_7] - \beta_1E[X_4]$.
+
+2.) Ahora trataremos de calcular la covarianza entre $X_4$ y $X_7$, esto lo hacemos intuitivamente ya que queremos ver como se relacionan las variables:
+$$Cov(X_4, X_7) = Cov(X_4, \beta_0 + \beta_1 X_4 + \epsilon) = \beta_0 Cov(X_4, 1) + \beta_1 Cov(X_4, X_4) + Cov(X_4, \epsilon) = \beta_1 Var(X_4)$$
+(ya que $Cov(X_4, 1) = 0$ y $Cov(X_4, \epsilon) = 0$)
+Y obtenemos que, $\beta_1 = \frac{Cov(X_4, X_7)}{Var(X_4)}$.
+
+Usando ahora la muestra *datos* tratemos de estimar los parámetros $\beta_0$ y $\beta_1$ de la forma siguiente:
+
+$$\bar{\beta_1} = \frac{s_{x_4x_7}}{s_{x_4x_4}}$$
+$$\bar{\beta_0} = \bar{x_7} - \bar{\beta_1}\bar{x_4}$$
+donde, $s_{xy} = \frac{1}{n-1}\sum_{i=1}^{n}(x_i - \bar{x})(y_i - \bar{y})$ y $s_{xx} = \frac{1}{n-1}\sum_{i=1}^{n}(x_i - \bar{x})^2$.
+
+```{r}
+media_x_4 <- mean(datos$X_4)
+media_x_7 <- mean(datos$X_7)
+
+cov_x4_x7 <- (1/(nrow(datos)-1))*sum((datos$X_4 - media_x_4) * (datos$X_7 - media_x_7))
+var_x4 <- (1/(nrow(datos)-1))*sum((datos$X_4 - media_x_4)^2)
+
+beta_1 <- cov_x4_x7 / var_x4
+beta_0 <- media_x_7 - beta_1 * media_x_4
+```
+
+```{r}
+beta_1
+beta_0
+```
+
+
+Dibujemos ahora la recta de regresión usando los parámetros estimados:
+
+```{r}
+ggplot(datos, aes(x = X_4, y = X_7)) +
+  geom_point() +
+  geom_abline(intercept = beta_0, slope = beta_1, color = "red") +
+  labs(title = "Recta estimada de regresión entre X4 y X7",
+       x = "X4",
+       y = "X7") +
+  theme_minimal()
+```
+
+Por último, calculemos el parámetro $\sigma^2$ de la distribución normal de $\epsilon$ . Para ello, calculamos los residuos de la regresión como:
+
+$$\hat{\epsilon} = X_7 - \hat{\beta_0} - \hat{\beta_1}X_4$$
+y la cuasivarianza de los residuos como:
+$$\hat{\sigma}^2 = \frac{1}{n-2} \sum_{i=1}^{n} \hat{\epsilon}^2$$
+Luego,
+
+```{r}
+residuos <- datos$X_7 - (beta_0 + beta_1 * datos$X_4)
+var_residuos <- sum(residuos^2) / (nrow(datos) - 2)
+var_residuos
+```
+
+## Ejercicio 4
+
+Sabiendo la familia paramétrica de las distribuciones y sus parámetros, argumenta cómo podría evaluar la calidad de los estimadores.
+
+# Anexo 
+
+Los datos han sido generados con distribución base:
+  
+  - $X_1 \sim Binomial(n, p)$
+  
+  - $X_2 \sim Poisson(\lambda)$
+  
+  - $X_3 \sim Binomial(n, p)$
+  
+  - $X_4 \sim Normal(\mu, \sigma)$
+  
+  - $X_5 \sim Exponencial (\lambda)$
+  
+  - $X_6 \sim Gamma(\alpha, \lambda)$
+  
+  - $X_8 \sim Uniforme(a, b)$
+  
+  - $X_9\sim Normal (\mu, \sigma)$ 
+  
+  - $X_{10} \sim Binomial(n, p)$. 
+
+Algunas muestras están contaminadas con datos generados fuera de su distribución base.

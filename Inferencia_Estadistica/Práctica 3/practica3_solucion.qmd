@@ -1,0 +1,182 @@
+---
+title: "Práctica 3. Muestreo Aleatorio"
+subtitle: "Inferencia Estadística 2024-2025"
+author: "Antonio Elías"
+format: pdf
+---
+
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+# Ejercicio 1
+
+Sea $X_1, \dots X_n$ una secuencia de variables aleatorias con distribución exponencial con esperanza 1. ¿Cuál es la probabilidad de que la media muestral diste en más de 0.1 de la poblacional?
+
+1.  Dé el valor aproximado por el Teorema Central del Límite.
+
+Se nos pide calcular $P(|\bar{x} - \mu| > 0.1)$. Para ello, podemos usar el **Teorema Central del Límite** ( $\frac{\hat{X}_n - \mu}{\sigma / \sqrt{n}}$ $\stackrel{d}{\longrightarrow}$ $N(0,1)$ ). Luego, $P(\frac{|\hat{x} - \mu|}{\sigma / \sqrt{n}} > 0.1/(\sigma / \sqrt{n})) =$ $P(|Z| > \sqrt{30} * 0.1) =$ $2*P(Z \leq -0.5477)$.
+
+```{r}
+
+mu <- 1
+n <- 30
+epsilon <- 0.1
+
+2*pnorm(-sqrt(n)*epsilon)
+
+```
+
+2.  Aproxime esta probabilidad por simulación.
+
+```{r}
+# Definimos las variables necesarias
+n <- 30
+lambda <- 1
+epsilon <- 0.1
+num_muestras <- 1000
+
+# Construimos una matriz con n filas y num_muestras columnas
+
+muestras <- matrix(rexp(num_muestras*n, lambda) , nrow = n, ncol = num_muestras)
+medias <- apply(muestras, 2, mean)
+
+probabilidad_final <- mean(abs(medias - 1/lambda) > epsilon)
+
+probabilidad_final
+
+# Muestra de tamaño 30 de la distribución exponencial con rate lambda
+# rexp(n, rate = lambda)
+
+# Mirar la probabilidad que diste mayor de 0.1
+# abs(mean(rexp(n, rate = lambda))- 1/lambda) > epsilon
+
+```
+
+3.  Calcule el valor exacto y compare los resultados.
+
+La probabilidad teórica para una $Exp(\lambda)$ vimos en clase que se podía ver como la distribución $Gamma(n, n\lambda)$. Luego, $P(|\bar{x} - \mu| > 0.1) =$ $P(|\bar{x} - (1/\lambda)| > 0.1) =$ $P(-0.1 + (1/\lambda) > \bar{x}) + P(0.1 + (1/\lambda) < \bar{x}) =$ $P(\bar{x} > 1.1) + P(\bar{x} < 0.9).$
+
+```{r}
+(1 - pgamma(1.1,n,n*lambda)) + pgamma(0.9,n,n*lambda)
+
+```
+
+# Ejercicio 2
+
+## Ley de Grandes Números
+
+Sea $\bar{X} = \sum_{i=1}^n X_i$ siendo $X_1, \dots, X_n$ una secuencia de variables aleatorias independiente e identicamente distribuidos.
+
+1.  Enuncie y demuestre la Ley (débil) de Grandes Números.
+
+<!-- -->
+
+2.  Ilustre por simulación la Ley de Grandes Números. Suponga que $X \sim N(0,1)$.
+
+```{r}
+num_muestras <- 100
+epsilon <- 0.01
+seq_N <- 2:1000
+
+mean_samples_mean <- sapply(seq_N, function(x) mean(replicate(num_muestras, mean(rnorm(x)))))
+
+ggplot(data = data.frame(x = seq_N, y = mean_samples_mean), aes(x = x, y = y)) + geom_line() + geom_hline(yintercept = c(-epsilon,epsilon), color = "red") + theme_minimal()
+
+```
+
+# Ejercicio 3
+
+## Convergencia en probabilidad de la varianza de S\^2
+
+Siendo $X_1, \dots, X_n$ una secuencia de variables aleatorias independiente e identicamente distribuidos con media $\mu$ y varianza $\sigma ^2$. Definamos la variable aleatoria cuasivarianza muestral como $S^2 = \frac{1}{n-1} \sum_{i=1}^n(X_i - \bar{X})^2$.
+
+1.  Ilustre por simulación la convergencia en probabilidad de $E[S^2]$ a $\sigma^2$ para $X \sim N(0,1)$.
+
+Debemos ver que $\lim_{n\to\infty} P(|S_n^2 - \sigma^2| > \varepsilon) = 0$. Es decir, ilustraremos un gráfico en el que, a mayor tamaño de '*n*', la diferencia entre la varianza muestral y la varianza poblacional es menor y se establece dentro de un intervalo de confianza $(-\epsilon, \epsilon)$.
+
+```{r}
+# Definamos una función que dado un vector de tamaño n
+# se calcule su cuasivarianza muestral
+
+funcion_s2 <- function(vectorN){
+  n <- length(vectorN)
+  mean_vector <- mean(vectorN)
+  return((1/(n-1))*sum((vectorN - mean_vector)^2))
+}
+```
+
+```{r}
+num_muestras <- 100
+epsilon <- 0.01
+seq_N <- 2:1200
+
+sigma <- 1
+
+mean_sample_var <- sapply(seq_N, function(x) 
+  mean(replicate(num_muestras, funcion_s2(rnorm(x)))) - sigma^2)
+
+data.frame(DifVariance = mean_sample_var, sample_size = seq_N) %>%
+ggplot() +
+geom_line(aes(x = sample_size, y = DifVariance)) +
+geom_hline(yintercept = c(-epsilon, epsilon),color = "red") +
+theme_minimal()
+
+```
+
+2.  Observe el comportamiento de la varianza de la varianza muestral $V[S^2]$ cuando $n \rightarrow \infty$.
+
+```{r}
+var_sample_var <- sapply(seq_N, function(x)
+  var(replicate(num_muestras, funcion_s2(rnorm(x)))))
+
+data.frame(Variance = var_sample_var, sample_size = seq_N) %>%
+ggplot() +
+geom_line(aes(x = sample_size, y = Variance), color = "blue")
+```
+
+# Ejercicio 4.
+
+## Dependencia/Independencia de la media y la varianza muestral.
+
+Muestre por simulación la relación estadística existente entre la media $\bar{X}$ y la cuasivarianza $\sigma ^2$ muestral. Use $X \sim N(0,1)$.
+
+1.  Grafique la media contra la varianza muestral en un gráfico de puntos.
+
+```{r}
+n <- 30
+num_muestras <- 1000
+
+muestras <- matrix(rnorm(n*num_muestras), nrow = n, ncol = num_muestras)
+
+medias <- apply(muestras, 2, mean)
+varianzas <- apply(muestras, 2, funcion_s2)
+
+data.frame(Mean = medias, Variance = varianzas) %>%
+ggplot() +
+geom_point(aes(x = Mean, y = Variance)) +
+theme_minimal()
+
+```
+
+
+2.  Obtenga la distribución muestral de la correlación muestral entre la media y la varianza muestrales. Es decir, defina el estadístico correlación $\rho$ como la variable aleatoria $Y = \rho(\bar{X}, S^2)$ y obtenga su distribución en el muestreo.
+
+```{r}
+num_muestras <- 1000
+num_simulaciones <- 100
+n <- 30
+
+correlacion_muestral <- replicate(num_simulaciones, {
+  muestras <- matrix(rnorm(n * num_muestras), nrow = n, ncol = num_muestras)
+  cor(apply(muestras, 2, mean), apply(muestras, 2, funcion_s2))
+})
+
+data.frame(Correlation = correlacion_muestral) %>%
+ggplot() + geom_histogram(aes(x = Correlation, y = after_stat(density)),
+bins = 10,
+col = 'black',
+fill = 'olivedrab4')
+```
+

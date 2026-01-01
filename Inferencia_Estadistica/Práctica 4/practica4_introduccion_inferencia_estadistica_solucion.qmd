@@ -1,0 +1,203 @@
+---
+title: "Práctica 4. Muestreo Aleatorio"
+subtitle: "Inferencia Estadística 2024-2025"
+author: "Antonio Elías"
+format: pdf
+---
+
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(patchwork)
+```
+
+# Ejercicio 1
+
+Compare la distribución T-Student con $n$ grados de libertad con una Normal estándar con diferentes valores de $n$. ¿Qué se observa?
+
+```{r, warning=FALSE, fig.align="center"}
+# Define el rango del eje x del gráfico
+x_values <- seq(-4, 4, length.out = 1000)
+
+# Crea un data.frame con los valores de las densidades
+data <- data.frame(
+  x = rep(x_values, 5),
+  density = c(
+    dt(x_values, df = 1),
+    dt(x_values, df = 3),
+    dt(x_values, df = 10),
+    dt(x_values, df = 30),
+    dnorm(x_values, mean = 0, sd = 1)
+  ),
+  Distribution = factor(rep(
+    c("t (df=1)", "t (df=3)", "t (df=10)", "t (df=30)", "Normal"),
+    each = length(x_values)
+  ))
+)
+
+# Gráfico
+ggplot(data, aes(x = x, y = density, color = Distribution)) +
+  geom_line(size = 1) +
+  theme_minimal() +
+  labs(
+    title = "T-Student VS Normal(0,1)",
+    x = "x",
+    y = "Densidad",
+    color = "Distribución"
+  ) +
+  scale_color_manual(values = rainbow(5))
+```
+
+{{< pagebreak >}}
+
+
+# Ejercicio 2
+
+Considere una muestra aleatoria simple de tamaño $600$ donde cada $X$ individual sigue una distribución F-Snedecor($\alpha = 20$, $\phi = 10$) que tiene como esperanza y varianza 
+
+$$\mathbb{E}[X] = \phi/(\phi-2),$$ 
+$$\mathbb{V}[X]= \frac{2\phi^2(\alpha+\phi-2)}{\alpha(\phi-2)^2(\phi-4)}.$$ 
+
+Determine:
+
+  1. La probabilidad de que la media muestral difiera de la media poblacional en menos de $\epsilon = 0.05$.
+
+$$\mathbb{P}(|\bar{X} - \mu| < \epsilon) = \mathbb{P}(|Z| < \frac{\epsilon}{\sigma/\sqrt{n}}) = \mathbb{P}(|Z| < 1.8631)$$
+
+```{r}
+alpha <- 20 
+phi <- 10
+epsilon <- 0.05
+n <- 600
+
+media <- phi/(phi-2)
+varianza <- (2*phi^2*(alpha+phi-2))/(alpha*(phi-2)^2*(phi-4))
+
+1 - 2*pnorm(-epsilon/(sqrt(varianza)/sqrt(n)))
+```
+
+  2. Cálculo por simulación.
+
+```{r}
+R <- 1000
+
+# Genera datos y calcula medias
+muestras <- matrix(rf(n*R, df1 = alpha, df2 = phi), nrow = n)
+medias <- apply(muestras, 2, mean)
+
+# Proporción de las muestras para las que la media
+# muestral dista de la poblacional menos que epsilon:
+mean(abs(medias - media) < epsilon)
+```
+
+Densidad de la media simulada
+
+```{r}
+ggplot(data.frame(medias = medias)) +
+  geom_density(aes(x = medias)) + theme_minimal()
+```
+
+
+  3. ¿De qué tamaño debería ser la muestra para poder afirmar con probabilidad 0.95 que la media muestral difiere de la poblacional en menos de 0.01?
+
+```{r}
+epsilon <- 0.01
+```
+
+
+$$ \mathbb{P}(|\bar{X} - \mu| < \epsilon) = \mathbb{P}(|Z| < \frac{\epsilon}{\sigma/\sqrt{n}}) = 0.95 $$
+
+$$\mathbb{P}(|Z| < z) = 0.95 $$
+
+```{r}
+(z <- qnorm(0.05/2))
+```
+
+Por lo tanto, $\frac{\epsilon}{\sigma/\sqrt{n}} = z$ y $n = (z \sigma/\epsilon)^2$
+
+```{r}
+ceiling((z*sqrt(varianza)/epsilon)^2)
+```
+
+{{< pagebreak >}}
+
+# Ejercicio 3
+
+Se extrae una muestra aleatoria simple de tamaño $n=600$ de una variable aleatoria Normal con $\mu = 0$ y $\sigma^2 = 3$. Calcule la probabilidad $\mathbb{P}(|\bar{X} - \mu| < 0.1)$ considerando:
+
+```{r}
+n <- 600
+var <- 3
+```
+
+
+  1. Que conocemos $\sigma$.
+
+$$\mathbb{P}(|\bar{X} - \mu| < 0.1) = \mathbb{P}(|Z| < \frac{0.1}{\sigma/\sqrt{n}}) = \mathbb{P}(|Z| < 1.41)$$
+
+```{r}
+1-2*pnorm(-0.1/(sqrt(var/n)))
+```
+
+  2. Que desconocemos $\sigma$. 
+  
+```{r}
+X <- rnorm(n, mean = 0, sd = sqrt(var))
+
+1-2*pnorm(-0.1/(sd(X)/sqrt(n)))
+```
+
+{{< pagebreak >}}
+
+# Ejercicio 4
+
+Si asumimos que las notas de los estudiantes se distribuyen como una normal de varianza desconocida y media 7, calcule la probabilidad de que la nota media sea superior a 8.
+
+```{r}
+encuesta <- readRDS("encuesta.RDS")
+
+encuesta$NotaMediaGrado[which(encuesta$NotaMediaGrado >10)] <- c(6.4, 6.7)
+```
+
+$$\mathbb{P}(\bar{X} > 8) = \mathbb{P}(\frac{\bar{X} - \mu}{S/\sqrt{n}} > \frac{8 - 7}{s/\sqrt{n}}) = \mathbb{P}(t_{n-1} >  \frac{8 - 7}{s/\sqrt{n}})$$
+```{r}
+n <- sum(!is.na(encuesta$NotaMediaGrado))
+s <- sd(encuesta$NotaMediaGrado, na.rm = TRUE)
+
+1-pt((8-7)/(s/sqrt(n)), df = n - 1)
+```
+
+{{< pagebreak >}}
+
+# Ejercicio 5
+
+En una gasolinera se observa que no se suministra exactamente la cantidad que aparece en las pantallas de los surtidores. 
+Según los productores de los mismos, la cantidad de gasolina depositada difiere de lo que pone en la pantalla como una normal con varianza de 0.05. 
+
+  1. Se van a analizar las cantidades de 35 garrafas elegidas al azar, ¿cuál es la probabilidad de que la varianza muestral sea superior a 0.10?
+
+```{r}
+s <- 0.1
+n <- 35
+varianza <- 0.05
+```
+
+
+La distribución en el muestreo de la cuasivarianza es
+
+  $$(n-1) S^2/\sigma^2 \sim \mathcal{X}^2_{n-1}$$
+Por lo tanto, se pide la probabilidad siguiente
+
+$$\mathbb{P}(S^2 > 0.1) = \mathbb{P}((n-1) S^2/\sigma^2 > 0.1(n-1)/\sigma^2) = \mathbb{P}(\mathcal{X}_{34}^2 > 0.1\times 34/0.05)$$
+```{r}
+1-pchisq(s*(n-1)/varianza, df = n-1)
+```
+
+  2. Se calcula la cuasivarianza de la muestra de 35 garrafas y se obtiene 0.2. ¿Qué puede decir acerca de los surtidores de gasolina?
+  
+```{r}
+s <- 0.2
+1-pchisq(s*(n-1)/varianza, df = n-1)
+```
+  
+  

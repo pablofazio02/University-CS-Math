@@ -1,0 +1,373 @@
+import java_cup.runtime.*;
+import java.util.*;
+
+//Símbolos terminales
+terminal MAS, MENOS, POR, DIV, MENOSUNARIO, PYC, AP, CP, ALL, CLL, AC, CC, IGUAL, PUNTO, COMA;
+terminal PRINT, WHILE, DO, IF, ELSE, FOR, FORALL, EXISTS, STEP, FROM, TO, LENGTH;
+terminal MENOR, MENOROIGUAL, IGUALDAD, NOIGUALDAD, MAYOR, MAYOROIGUAL, NOT, AND, OR, IMPLICA, DOBLEIMPLICA, XOR;
+terminal String ENTERO, REAL, IDENT, CH, STR, TRUE, FALSE;
+terminal INT, FLOAT, CHAR, STRING, BOOLEAN;
+
+//Símbolos no terminales
+non terminal axioma;
+non terminal AST listaSentencia, sentencia;
+non terminal AST expresion;
+non terminal AST decVar, declaracion, decArray;
+non terminal AST numero, caracter, string, trueorFalse;
+non terminal AST llavesArray, expresionforall, expresionforallInt, expresionexists, expresionexistsInt;
+non terminal ArrayList<AST> listaArr, forall, forallInt, exists, existsInt;
+non terminal TIPO tipo;
+
+//Precedencias (Cuanto más prioritario es, más abajo en la lista está)
+// Se pone right si es asociativo por la derecha, es decir, p * q * r = p * (q * r)
+// Se pone left si es asociativo por la izquierda, es decir, p * q * r = (p * q) * r
+precedence left COMA;
+precedence right IGUAL;
+precedence right DOBLEIMPLICA; // La asociativad da igual funciona bien en ambos sentidos
+precedence right IMPLICA;
+precedence left OR;
+precedence left XOR; // La asociatividad da igual
+precedence left AND;
+precedence right NOT;
+precedence left IGUALDAD, NOIGUALDAD, MENOR, MENOROIGUAL, MAYOR, MAYOROIGUAL;
+precedence left MAS, MENOS;
+precedence left POR, DIV;
+precedence left INT, FLOAT;
+precedence left CHAR;
+precedence left STRING;
+precedence left MENOSUNARIO;
+precedence nonassoc AP, CP;
+precedence nonassoc IF;
+precedence nonassoc ELSE;
+
+//Gramática
+
+axioma ::= listaSentencia:ls                        {: ls.ctd(); :}
+        ;
+
+listaSentencia ::= listaSentencia:l sentencia:s     {: RESULT = new AST(l,s); :}
+                
+                |  sentencia:s                      {: RESULT = new AST(null,s); :}
+                ;
+
+sentencia ::= expresion:e  PYC                                                          {: RESULT = e; :}
+           
+           |  PRINT AP expresion:e CP PYC                                               {: RESULT = new PRINT(e,null); :}
+
+           |  PRINT AP llavesArray:e CP PYC                                             {: RESULT = new PRINT(e,null); :}
+           
+           |  IF AP expresion:c CP sentencia:s                                          {: IF aux = new IF(c,s); RESULT = new IFELSE(aux,null); :}  //Un IF es un IFELSE con las sentencias del caso False a NULL!!!
+           
+           |  IF AP expresion:c CP sentencia:s ELSE sentencia:sElse                     {: IF aux = new IF(c,s); RESULT = new IFELSE(aux,sElse); :}
+           
+           |  WHILE AP expresion:c CP sentencia:s                                       {: RESULT = new WHILE(c,s); :}
+           
+           |  DO sentencia:s WHILE AP expresion:c CP PYC                                {: RESULT = new DOWHILE(s,c); :}
+           
+           |  FOR AP expresion:e1 PYC expresion:c PYC expresion:e2 CP sentencia:s       {:
+                                                                                                         /*    OBSERVACION:
+                                                                                                                       En un FOR, tenemos                                                                                 
+                                                                                                                       1. Una primera sentencia, que suele ser una variable i que se inicializa (i=1 por ejemplo)
+                                                                                                                       2. La condición que debe cumplir dicha sentencia para entrar al bucle
+                                                                                                                       3. Una actualización de la sentencia
+                                                                                                                       4. Las sentencias a ejecutar dentro del bucle
+                                                                                                         Lo podemos ver como un while(sentencia cumpla condición) -> ejecutar sentencias internas + actualizar sentencia 
+                                                                                                  */
+
+                                                                                                  AST sentenciasEjecutar = new AST (s, e2);        //donde s son las sentencias dentro del for y e2 la actualización de la variable
+                                                                                                  WHILE whiLe = new WHILE(c, sentenciasEjecutar);  //recordamos que en WHILE había una condición para entrar y las sentencias de dentro
+                                                                                                  RESULT = new AST(e1,whiLe);                      //En primer lugar se inicializa la variable y luego viene el WHILE construido que representa al FOR
+                                                                                        :} 
+           | FOR AP PYC expresion:c PYC expresion:e2 CP sentencia:s                      {:
+                                                                                                  AST sentenciasEjecutar = new AST (s, e2);        //donde s son las sentencias dentro del for y e2 la actualización de la variable
+                                                                                                  WHILE whiLe = new WHILE(c, sentenciasEjecutar);  //recordamos que en WHILE había una condición para entrar y las sentencias de dentro
+                                                                                                  RESULT = new AST(null,whiLe);
+                                                                                         :}
+           | FOR AP expresion:e1 PYC expresion:c PYC CP sentencia:s                     {:
+                                                                                                  AST sentenciasEjecutar = new AST (s, null);        //donde s son las sentencias dentro del for y e2 la actualización de la variable
+                                                                                                  WHILE whiLe = new WHILE(c, sentenciasEjecutar);  //recordamos que en WHILE había una condición para entrar y las sentencias de dentro
+                                                                                                  RESULT = new AST(e1,whiLe);
+                                                                                         :}
+           | FOR AP PYC expresion:c PYC CP sentencia:s                                    {:     AST sentenciasEjecutar = new AST (s, null);        //donde s son las sentencias dentro del for y e2 la actualización de la variable
+                                                                                                  WHILE whiLe = new WHILE(c, sentenciasEjecutar);  //recordamos que en WHILE había una condición para entrar y las sentencias de dentro
+                                                                                                  RESULT = new AST(null,whiLe);
+                                                                                           :}                                                                    
+           |  ALL {: TablaSimbolos.nuevoBloque(); :}
+              listaSentencia:l {: TablaSimbolos.finBloque(); :}
+              CLL                                                                       {: RESULT = new BLOQUE(l); :}
+
+           ;
+
+expresion ::= expresion:e1 MAS expresion:e2       {: RESULT = new SUMA(e1,e2); :}
+           
+           |  expresion:e1 MENOS expresion:e2     {: RESULT = new RESTA(e1,e2); :}
+           
+           |  expresion:e1 POR expresion:e2       {: RESULT = new POR(e1,e2); :}
+           
+           |  expresion:e1 DIV expresion:e2       {: RESULT = new DIV(e1,e2); :}
+  
+           |  MENOS expresion:e                   {: RESULT = new RESTA(e,null); :} %prec MENOSUNARIO
+           
+           |  AP expresion:e CP                   {: RESULT = e; :}
+           
+           |  numero:n                           {: RESULT = n; :}
+
+           |  caracter:c                         {: RESULT = c; :}
+
+           |  string:st                          {: RESULT = st; :}
+
+           |  trueorFalse:tf                     {: RESULT = tf; :} // Entra con las palabras "true" y "false"
+           
+           |  IDENT:i                            {: if(!TablaSimbolos.check(i)){ // Diferenciar si es un identificador booleano o de otro tipo
+                                                        Generador.error(); 
+                                                     } else {
+                                                            int bloque = TablaSimbolos.inWhichBloque(i);
+                                                            String nombre = i+"_"+bloque;
+                                                            TIPO t = TablaSimbolos.getTipo(i);
+
+                                                            if(t.tipo().equals(TIPO.BOOLEAN)){
+                                                                RESULT = new BOOLEANO(nombre);
+                                                            }else{
+                                                                RESULT = new CONSTANTE(nombre,t);
+                                                            }
+                                                            
+                                                     }      
+                                                 :}
+
+           |  IDENT:i IGUAL expresion:e           {: if(!TablaSimbolos.check(i)){
+                  /* x = a */                           Generador.error(); 
+                                                     } else {
+                                                        int bloque = TablaSimbolos.inWhichBloque(i);
+                                                        String nombre = i+"_"+bloque;
+                                                        RESULT = new ASIG(nombre, e);
+                                                     }
+                                                                 
+                                                 :}
+
+           |  IDENT:i AC expresion:e1 CC IGUAL expresion:e2         {: if(!TablaSimbolos.check(i)){
+                  /* x[i] = b*/                                        Generador.error(); 
+                                                                     } else {
+                                                                      int bloque = TablaSimbolos.inWhichBloque(i);
+                                                                      String nombre = i+"_"+bloque;
+                                                                      TIPO t = TablaSimbolos.getTipo(i);
+                                                                      RESULT = new VECTORELEM(nombre,t,e1,e2);
+                                                                     }
+                                                                    :}  
+
+           |  IDENT:i AC expresion:e CC                          {: if(!TablaSimbolos.check(i)){
+                                                                      Generador.error(); 
+                                                                  } else {
+                                                                      int bloque = TablaSimbolos.inWhichBloque(i);
+                                                                      String nombre = i+"_"+bloque;
+                                                                      TIPO t = TablaSimbolos.getTipo(i);
+                                                                      RESULT = new VECTORELEM(nombre,t,e,null);
+                                                                  }
+                                                               :}
+           |  IDENT:i IGUAL llavesArray:s                       {: if(!TablaSimbolos.check(i)){
+                  /* v = {a, b, c ...} */                                Generador.error(); 
+                                                                  } else {
+                                                                         int bloque = TablaSimbolos.inWhichBloque(i);
+                                                                         String nombre = i+"_"+bloque;
+                                                                         RESULT = new ASIGARR(nombre,s);
+                                                                  }
+                                                                  :}
+
+           |  IDENT:i PUNTO LENGTH                              {: if(!TablaSimbolos.check(i)){
+                                                                      Generador.error(); 
+                                                                  } else {
+                                                                      int bloque = TablaSimbolos.inWhichBloque(i);
+                                                                      String nombre = i+"_"+bloque;
+                                                                      TIPO t = TablaSimbolos.getTipoSub(nombre);
+                                                                      RESULT = new LEN(nombre,t);
+                                                                  }
+                                                                  :}
+
+           |  declaracion:d                                           {: RESULT = d;  :} 
+
+           |  decArray:dA                                             {: RESULT = dA;  :}
+           
+           |  AP tipo:t CP expresion:e                                {: RESULT = new CASTING(t,e); :}
+
+           | expresion:c1 IMPLICA expresion:c2          {: RESULT = new IMPLICA(c1, c2); :}
+
+           | expresion:c1 DOBLEIMPLICA expresion:c2     {: RESULT = new DOBLEIMPLICA(c1, c2); :} // p <--> q = (p-->q) && (q-->p)
+
+           | expresion:c1 XOR expresion:c2              {: RESULT = new XOR(c1, c2); :} // p ^^ q = (p && !q) || (!p && q) (Uno y solo uno de ellos es cierto)
+
+           | expresion:e1 IGUALDAD expresion:e2         {: RESULT = new CONDICION(1,e1,e2); :}   
+
+           | expresion:e1 NOIGUALDAD expresion:e2       {: RESULT = new CONDICION(2, e1, e2); :}
+
+           | expresion:e1 MAYOR expresion:e2            {: RESULT = new CONDICION(3,e1,e2); :}
+
+           | expresion:e1 MAYOROIGUAL expresion:e2      {: RESULT = new CONDICION(4,e1,e2); :}  
+
+           | expresion:e1 MENOR expresion:e2            {: RESULT = new CONDICION(5,e1,e2); :}
+
+           | expresion:e1 MENOROIGUAL expresion:e2      {: RESULT = new CONDICION(6,e1,e2); :}
+
+           | expresion:c1 AND expresion:c2              {: RESULT = new AND(7, c1,c2); :}
+
+           | expresion:c1 OR expresion:c2               {: RESULT = new OR(8, c1,c2); :}
+
+           | NOT expresion:c                            {: RESULT = new NOT(9, c); :}
+
+           | forall:f COMA expresion:e                  {: RESULT = new FORALL(f,e); :}
+
+           | forallInt:f COMA expresion:e               {: RESULT = new FORALLINT(f,e); :}
+
+           | exists:ex COMA expresion:e                  {: RESULT = new EXISTS(ex,e); :}
+
+           | existsInt:ex COMA expresion:e              {: RESULT = new EXISTSINT(ex,e); :}
+
+           ;
+
+           
+numero ::= ENTERO:n           {: RESULT = new CONSTANTE(n,new TIPO(TIPO.INT)); :}
+       |   REAL:r             {: RESULT = new CONSTANTE(r,new TIPO(TIPO.FLOAT)); :}
+       ;
+
+caracter ::= CH:c           {: RESULT = new CONSTANTE(c,new TIPO(TIPO.CHAR)); :}
+          ;
+
+string ::= STR:st              {: RESULT = new CADENA(st); :}
+     ;
+
+trueorFalse ::= TRUE {: RESULT = new BOOL(1); :}
+             | FALSE {: RESULT = new BOOL(0); :}
+             ;
+
+tipo ::= INT                                              {: RESULT = new TIPO(TIPO.INT); :} 
+       | FLOAT                                            {: RESULT = new TIPO(TIPO.FLOAT); :}
+       | CHAR                                             {: RESULT = new TIPO(TIPO.CHAR); :}
+       | STRING                                           {: RESULT = new TIPO(TIPO.STRING); :}
+       | BOOLEAN                                          {: RESULT = new TIPO(TIPO.BOOLEAN); :}
+      ;
+
+
+declaracion ::= tipo:t decVar:var                       {:
+                                                                //decVar será una CONSTANTE o ASIG, en cualquier caso, una EXPRESION
+                                                                String nombreVar = ((EXP)var).getCodigo();
+                                                                ((EXP)var).setTipo(t); 
+                                                                TablaSimbolos.insertar(nombreVar,t);   
+                                                                RESULT = new DEC(null,var);  
+                                                         :}
+
+             | declaracion:d COMA decVar:var            {:
+                                                                String nombreVar = ((EXP)var).getCodigo();
+                                                                TIPO t = ((DEC)d).getTipo();
+                                                                ((EXP)var).setTipo(t);
+                                                                TablaSimbolos.insertar(nombreVar,t);
+                                                                RESULT = new DEC(d,var);
+                                                        :}
+            ;
+      
+decVar  ::=   IDENT:i                                       {: String nombre = TablaSimbolos.varBlock(i); RESULT = new CONSTANTE(nombre); :} // Sin el tipo aún 
+
+          |   IDENT:i IGUAL expresion:e                    {: String nombre = TablaSimbolos.varBlock(i); RESULT = new ASIG(nombre, e); :} 
+
+          ;
+
+decArray ::= tipo:t IDENT:i AC ENTERO:n CC                 {: int tam = Integer.parseInt(n); 
+                                                               TIPO tipo = new TIPO(TIPO.ARRAY,t,tam);
+                                                               String nombre = TablaSimbolos.varBlock(i);
+                                                               TablaSimbolos.insertar(nombre,tipo);
+                                                               RESULT = new VECTOR(nombre,tipo); 
+                                                           :}
+
+          |  tipo:subt IDENT:i AC ENTERO:n CC IGUAL llavesArray:s      {:
+                                                                      TIPO tipo = new TIPO(TIPO.ARRAY,subt,Integer.parseInt(n));
+                                                                      String nombre = TablaSimbolos.varBlock(i);
+                                                                      TablaSimbolos.insertar(nombre,tipo);
+                                                                      RESULT = new ASIGARR(nombre,s);
+                                                                    :}
+          ; 
+
+llavesArray ::= ALL listaArr:l CLL                       {: RESULT = new LISTARRAY(l); :}    
+              ;
+
+listaArr ::= listaArr:l COMA expresion:e                {:     l.add(e);
+                                                               RESULT = l;
+                                                        :}
+
+       |  expresion:e                                   {: ArrayList<AST> aux = new ArrayList<>(); 
+                                                           aux.add(e);
+                                                           RESULT = aux;
+                                                        :}
+       ;
+
+forall ::= expresionforall:e  {: 
+                                        ArrayList<AST> lista = new ArrayList<>(); 
+                                        lista.add(e);
+                                        RESULT = lista;
+                              :}
+        ;
+
+forallInt ::= expresionforallInt:e  {: 
+                                        ArrayList<AST> lista = new ArrayList<>(); 
+                                        lista.add(e);
+                                        RESULT = lista;
+                                    :}
+           ;
+
+exists ::= expresionexists:e {: 
+                                        ArrayList<AST> lista = new ArrayList<>(); 
+                                        lista.add(e);
+                                        RESULT = lista;
+                             :}
+        ;
+
+existsInt ::= expresionexistsInt:e  {: 
+                                        ArrayList<AST> lista = new ArrayList<>(); 
+                                        lista.add(e);
+                                        RESULT = lista;
+                                    :}
+           ;
+
+expresionforall ::= FORALL expresion:e {: RESULT = e; :}
+                ;
+
+expresionforallInt ::= FORALL IDENT:i FROM ENTERO:n1 TO ENTERO:n2 {: if(!TablaSimbolos.check(i)){
+                                                                      Generador.error(); 
+                                                                    } else {
+                                                                        int bloque = TablaSimbolos.inWhichBloque(i);
+                                                                        String nombre = i+"_"+bloque;
+                                                                        RESULT = new DECFORALLINT(nombre, n1, n2, "1"); 
+                                                                    }
+                                                                  :}
+
+                    | FORALL IDENT:i FROM ENTERO:n1 TO ENTERO:n2 STEP ENTERO:n3 {: if(!TablaSimbolos.check(i)){
+                                                                                    Generador.error(); 
+                                                                                    } else {
+                                                                                        int bloque = TablaSimbolos.inWhichBloque(i);
+                                                                                        String nombre = i+"_"+bloque;
+                                                                                        RESULT = new DECFORALLINT(nombre, n1, n2, n3); 
+                                                                                    }
+                                                                                :}
+
+                    ;
+
+expresionexists ::= EXISTS expresion:e {: RESULT = e; :}
+                 ;
+
+expresionexistsInt ::= EXISTS IDENT:i FROM ENTERO:n1 TO ENTERO:n2 {: if(!TablaSimbolos.check(i)){
+                                                                      Generador.error(); 
+                                                                    } else {
+                                                                        int bloque = TablaSimbolos.inWhichBloque(i);
+                                                                        String nombre = i+"_"+bloque;
+                                                                        RESULT = new DECFORALLINT(nombre, n1, n2, "1"); 
+                                                                    }
+                                                                  :}
+
+                    | EXISTS IDENT:i FROM ENTERO:n1 TO ENTERO:n2 STEP ENTERO:n3 {: if(!TablaSimbolos.check(i)){
+                                                                                    Generador.error(); 
+                                                                                    } else {
+                                                                                        int bloque = TablaSimbolos.inWhichBloque(i);
+                                                                                        String nombre = i+"_"+bloque;
+                                                                                        RESULT = new DECFORALLINT(nombre, n1, n2, n3); 
+                                                                                    }
+                                                                                :}
+
+                    ;
+
+              

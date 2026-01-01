@@ -1,0 +1,132 @@
+---
+title: "Carga y Tratamiento de Datos"
+author: "Antonio Elías"
+format: pdf
+execute: 
+  warning: false
+  message: false
+---
+
+# Carga de datos
+
+```{r}
+encuesta <- read.csv("Datos_Estudiantes.csv")
+```
+
+## Comprueba el tipo de objeto que es encuesta
+
+```{r}
+class(encuesta)
+```
+
+## Comprueba los tipos de datos y que sean coherentes.
+
+```{r}
+str(encuesta)
+```
+
+# Tratamiento de datos
+
+## Eliminar las columnas que no son útiles.
+
+Opción 1: truco usa `dput(names(encuesta))`.
+
+```{r}
+quiero <- c("Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", 
+"Q08", "Q09", "Q10", "Q11", "Q12", "Q13..Instagram", "Q13..Tiktok", 
+"Q13..Facebook", "Q13..BeReal", "Q13..X", "Q13..Bluesky", "Q13..Threads", 
+"Q13..Otra", "Q13..Ninguna", "Q14", "Q15", "Q16")
+
+encuesta_util <- encuesta[,quiero]
+```
+
+Opción 2:
+
+```{r, eval = FALSE}
+noquiero <- c("Respuesta", "Enviado.el.", "Institución", "Departamento", 
+"Asignatura", "Grupo", "ID", "Nombre.completo", "Documento.de.identidad", 
+"Completado")
+
+encuesta_util <- encuesta[, ! names(encuesta) %in% noquiero]
+```
+
+Opción 3:
+
+```{r, eval = FALSE}
+
+library(dplyr)
+encuesta_util <- encuesta %>% select(all_of(quiero)) # es igual a select(encuesta, quiero)
+```
+
+## Combina las variables de red social
+
+Combina "Q13..Tiktok","Q13..Facebook", "Q13..BeReal", "Q13..X", "Q13..Bluesky", "Q13..Threads", "Q13..Otra" en una única llamada RedSocialFavorita que contenga el nombre de la red social para cada individuo.
+
+```{r}
+aux_redsocial <- matrix(NA, ncol = 9, nrow = nrow(encuesta_util))
+
+aux_redsocial[,1] <- ifelse(as.logical(encuesta_util$Q13..Instagram), "Instagram", NA)
+aux_redsocial[,2] <- ifelse(as.logical(encuesta_util$Q13..Tiktok), "Tiktok", NA)
+aux_redsocial[,3] <- ifelse(as.logical(encuesta_util$Q13..Facebook), "Facebook", NA)
+aux_redsocial[,4] <- ifelse(as.logical(encuesta_util$Q13..BeReal), "BeReal", NA)
+aux_redsocial[,5] <- ifelse(as.logical(encuesta_util$Q13..X), "X", NA)
+aux_redsocial[,6] <- ifelse(as.logical(encuesta_util$Q13..Bluesky), "Bluesky", NA)
+aux_redsocial[,7] <- ifelse(as.logical(encuesta_util$Q13..Threads), "Threads", NA)
+aux_redsocial[,8] <- ifelse(as.logical(encuesta_util$Q13..Otra), "Otra", NA)
+aux_redsocial[,9] <- ifelse(as.logical(encuesta_util$Q13..Ninguna), "Ninguna", NA)
+
+RedSocialFavorita <- unlist(apply(aux_redsocial, 1, function(x) na.omit(x)[1]))
+```
+
+## Agrega la variable al data.frame:
+
+```{r}
+encuesta_util$RedSocialFavorita <- RedSocialFavorita
+```
+
+-   Cambiar los nombres de las columnas por c("Edad", "Peso", "Altura", "Sexo", "Hermanos", "Distancia", "NotaMediaGrado", "Probabilidad", "NotaProbabilidad", "NotaEsperadaIE", "SatisfaccionGrado", "TiempoMovil", "Instragram", "Tiktok", "Facebook", "BeReal", "X", "Bluesky", "Threads", "Otra", "Ninguna", "TiempoRedSocialFavorita", "FuturoLaboral", "InterésInferencia", "RedSocialFavorita").
+
+```{r}
+names(encuesta_util) <-  c("Edad", "Peso", "Altura", "Sexo", "Hermanos", "Distancia", "NotaMediaGrado", "Probabilidad", "NotaProbabilidad", "NotaEsperadaIE", "SatisfaccionGrado", "TiempoMovil", "Instragram", "Tiktok", "Facebook", "BeReal", "X", "Bluesky", "Threads", "Otra", "Ninguna", "TiempoRedSocialFavorita", "FuturoLaboral", "InteresInferencia", "RedSocialFavorita")
+```
+
+## Asignar tipo factores a las variables que son character.
+
+```{r}
+library(dplyr) # para usar %>%
+
+encuesta_util <- encuesta_util %>% mutate_if(is.character, as.factor)
+```
+
+## Ordena las variables categóricas ordinales.
+
+```{r}
+encuesta_util$InteresInferencia <- factor(encuesta_util$InteresInferencia,
+                                          levels = c("3 : Poco", "2 : Indiferente", "4 : Moderado", "5 : Mucho"),
+                                          labels = c("Poco", "Indiferente", "Moderado", "Mucho"),
+                                          ordered = TRUE)
+```
+
+# Comprobación de que todo está en orden
+
+```{r}
+str(encuesta_util)
+```
+
+```{r}
+head(encuesta_util)
+```
+
+# Guarda los datos limpios
+
+## Formato RDS de R:
+
+```{r}
+saveRDS(encuesta_util, file = "dataframe_encuesta.RDS")
+```
+
+## Formato csv:
+
+```{r}
+write.table(encuesta_util, file = "Datos_Estudiantes_limpio.csv")
+```

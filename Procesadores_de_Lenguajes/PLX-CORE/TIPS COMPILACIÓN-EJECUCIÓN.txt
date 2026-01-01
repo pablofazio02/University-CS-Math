@@ -1,0 +1,10 @@
+TIPS IMPORTANTES PARA LA COMPILACIÓN/EJECUCIÓN
+
+
+1. compilar.bat
+   
+2. ejecutar.bat nombre.plx nombre.ctd
+   
+3. Para crear el zip de entrega, ejecutamos en la terminal 
+   zip plxc.zip PLXC.flex PLXC.cup *.java
+   
